@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="32" fill="#020617"/>
+  <rect x="8" y="8" width="176" height="176" rx="28" fill="#0a0f2e" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="96" y="116" text-anchor="middle" font-family="serif" font-size="80" font-weight="bold" fill="#8b5cf6">∞</text>
+  <text x="96" y="158" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="600" fill="#64748b">LONGEVITY</text>
+</svg>
