@@ -77,39 +77,112 @@ const WHOOP_METRICS = [
 ];
 
 const BIOMARKERS = [
-  { key: "glucose", name: { ro: "Glucoză à jeun", en: "Fasting Glucose" }, target: "70-85", unit: "mg/dL", optimal: [70, 85], warning: [86, 99], bad: [100, 300], cat: "Metabolic", imp: { ro: "Rezistența la insulină e driver #1 al îmbătrânirii.", en: "Insulin resistance is the #1 driver of aging." }, freq: { ro: "3 luni", en: "3 months" } },
+  // METABOLIC
+  { key: "glucose", name: { ro: "Glucoza a jeun", en: "Fasting Glucose" }, target: "70-85", unit: "mg/dL", optimal: [70, 85], warning: [86, 99], bad: [100, 300], cat: "Metabolic", imp: { ro: "Driver #1 al imbatranirii.", en: "#1 driver of aging." }, freq: { ro: "3 luni", en: "3 months" } },
   { key: "hba1c", name: { ro: "HbA1c", en: "HbA1c" }, target: "< 5.2", unit: "%", optimal: [4, 5.2], warning: [5.3, 5.6], bad: [5.7, 14], cat: "Metabolic", imp: { ro: "Media glucozei pe 3 luni.", en: "3-month glucose average." }, freq: { ro: "3 luni", en: "3 months" } },
-  { key: "insulin", name: { ro: "Insulină à jeun", en: "Fasting Insulin" }, target: "2-5", unit: "μIU/mL", optimal: [2, 5], warning: [5.1, 8], bad: [8.1, 50], cat: "Metabolic", imp: { ro: "Marker precoce al rezistenței la insulină.", en: "Early marker of insulin resistance." }, freq: { ro: "3 luni", en: "3 months" } },
-  { key: "homair", name: { ro: "HOMA-IR", en: "HOMA-IR" }, target: "< 1.0", unit: "", optimal: [0, 1], warning: [1.1, 2], bad: [2.1, 10], cat: "Metabolic", imp: { ro: "Index de rezistență la insulină.", en: "Insulin resistance index." }, freq: { ro: "3 luni", en: "3 months" } },
-  { key: "hscrp", name: { ro: "hs-CRP", en: "hs-CRP" }, target: "< 0.5", unit: "mg/L", optimal: [0, 0.5], warning: [0.6, 1.5], bad: [1.6, 20], cat: "Inflamație", imp: { ro: "Inflamația cronică accelerează bolile.", en: "Chronic inflammation accelerates disease." }, freq: { ro: "3 luni", en: "3 months" } },
-  { key: "homocysteine", name: { ro: "Homocisteină", en: "Homocysteine" }, target: "< 7", unit: "μmol/L", optimal: [0, 7], warning: [7.1, 10], bad: [10.1, 50], cat: "Inflamație", imp: { ro: "Marker cardiovascular și neurologic.", en: "Cardiovascular and neurological marker." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "apob", name: { ro: "ApoB", en: "ApoB" }, target: "< 60", unit: "mg/dL", optimal: [0, 60], warning: [61, 90], bad: [91, 200], cat: "Cardiovascular", imp: { ro: "Cel mai bun predictor cardiovascular.", en: "Best cardiovascular predictor." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "lpa", name: { ro: "Lp(a)", en: "Lp(a)" }, target: "< 30", unit: "mg/dL", optimal: [0, 30], warning: [31, 50], bad: [51, 300], cat: "Cardiovascular", imp: { ro: "Genetic. Dacă e crescut, management agresiv.", en: "Genetic. If elevated, aggressive management." }, freq: { ro: "O dată", en: "Once" } },
+  { key: "insulin", name: { ro: "Insulina a jeun", en: "Fasting Insulin" }, target: "2-5", unit: "uIU/mL", optimal: [2, 5], warning: [5.1, 8], bad: [8.1, 50], cat: "Metabolic", imp: { ro: "Marker precoce rezistenta insulina.", en: "Early insulin resistance marker." }, freq: { ro: "3 luni", en: "3 months" } },
+  { key: "homair", name: { ro: "HOMA-IR", en: "HOMA-IR" }, target: "< 1.0", unit: "", optimal: [0, 1], warning: [1.1, 2], bad: [2.1, 10], cat: "Metabolic", imp: { ro: "Index rezistenta insulina.", en: "Insulin resistance index." }, freq: { ro: "3 luni", en: "3 months" } },
+  { key: "cpeptide", name: { ro: "C-Peptid", en: "C-Peptide" }, target: "0.8-1.5", unit: "ng/mL", optimal: [0.8, 1.5], warning: [1.6, 3], bad: [3.1, 10], cat: "Metabolic", imp: { ro: "Productia reala de insulina.", en: "Real insulin production." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "uricacid", name: { ro: "Acid Uric", en: "Uric Acid" }, target: "3.5-5.5", unit: "mg/dL", optimal: [3.5, 5.5], warning: [5.6, 7], bad: [7.1, 15], cat: "Metabolic", imp: { ro: "Guta, risc cardiovascular.", en: "Gout, cardiovascular risk." }, freq: { ro: "6 luni", en: "6 months" } },
+  // INFLAMATIE
+  { key: "hscrp", name: { ro: "hs-CRP", en: "hs-CRP" }, target: "< 0.5", unit: "mg/L", optimal: [0, 0.5], warning: [0.6, 1.5], bad: [1.6, 20], cat: "Inflamatie", imp: { ro: "Inflamatia cronica accelereaza bolile.", en: "Chronic inflammation accelerates disease." }, freq: { ro: "3 luni", en: "3 months" } },
+  { key: "homocysteine", name: { ro: "Homocisteina", en: "Homocysteine" }, target: "< 7", unit: "umol/L", optimal: [0, 7], warning: [7.1, 10], bad: [10.1, 50], cat: "Inflamatie", imp: { ro: "Marker cardiovascular si neurologic.", en: "Cardiovascular and neurological marker." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "fibrinogen", name: { ro: "Fibrinogen", en: "Fibrinogen" }, target: "200-300", unit: "mg/dL", optimal: [200, 300], warning: [301, 400], bad: [401, 700], cat: "Inflamatie", imp: { ro: "Inflamatie si risc coagulare.", en: "Inflammation and clotting risk." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "esr", name: { ro: "VSH (ESR)", en: "ESR" }, target: "< 10", unit: "mm/h", optimal: [0, 10], warning: [11, 20], bad: [21, 100], cat: "Inflamatie", imp: { ro: "Marker general inflamatie.", en: "General inflammation marker." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "il6", name: { ro: "IL-6 (Interleukina 6)", en: "IL-6 (Interleukin 6)" }, target: "< 1.8", unit: "pg/mL", optimal: [0, 1.8], warning: [1.9, 5], bad: [5.1, 50], cat: "Inflamatie", imp: { ro: "Citokina pro-inflamatorie cheie.", en: "Key pro-inflammatory cytokine." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "tnfa", name: { ro: "TNF-alpha", en: "TNF-alpha" }, target: "< 1.0", unit: "pg/mL", optimal: [0, 1], warning: [1.1, 3], bad: [3.1, 20], cat: "Inflamatie", imp: { ro: "Citokina inflamatorie.", en: "Inflammatory cytokine." }, freq: { ro: "Anual", en: "Annual" } },
+  // CARDIOVASCULAR
+  { key: "apob", name: { ro: "ApoB", en: "ApoB" }, target: "< 60", unit: "mg/dL", optimal: [0, 60], warning: [61, 90], bad: [91, 200], cat: "Cardiovascular", imp: { ro: "Cel mai bun predictor CV.", en: "Best CV predictor." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "lpa", name: { ro: "Lp(a)", en: "Lp(a)" }, target: "< 30", unit: "mg/dL", optimal: [0, 30], warning: [31, 50], bad: [51, 300], cat: "Cardiovascular", imp: { ro: "Genetic. Management agresiv daca e crescut.", en: "Genetic. Aggressive management if elevated." }, freq: { ro: "O data", en: "Once" } },
   { key: "ldl", name: { ro: "LDL-C", en: "LDL-C" }, target: "< 100", unit: "mg/dL", optimal: [0, 70], warning: [71, 100], bad: [101, 300], cat: "Cardiovascular", imp: { ro: "Cauza aterosclerozei.", en: "Cause of atherosclerosis." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "trig", name: { ro: "Trigliceride", en: "Triglycerides" }, target: "< 80", unit: "mg/dL", optimal: [0, 80], warning: [81, 150], bad: [151, 500], cat: "Cardiovascular", imp: { ro: "Marker rezistență insulină și risc cardiac.", en: "Insulin resistance and cardiac risk marker." }, freq: { ro: "3 luni", en: "3 months" } },
-  { key: "testTotal", name: { ro: "Testosteron Total", en: "Total Testosterone" }, target: "500-900", unit: "ng/dL", optimal: [500, 900], warning: [300, 499], bad: [0, 299], cat: "Hormonal", imp: { ro: "Masă musculară, energie, cogniție.", en: "Muscle mass, energy, cognition." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "testFree", name: { ro: "Testosteron Liber", en: "Free Testosterone" }, target: "15-25", unit: "pg/mL", optimal: [15, 25], warning: [10, 14.9], bad: [0, 9.9], cat: "Hormonal", imp: { ro: "Fracțiunea activă.", en: "Active fraction." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "shbg", name: { ro: "SHBG", en: "SHBG" }, target: "20-40", unit: "nmol/L", optimal: [20, 40], warning: [41, 60], bad: [61, 150], cat: "Hormonal", imp: { ro: "Leagă testosteronul.", en: "Binds testosterone." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "e2", name: { ro: "Estradiol (E2)", en: "Estradiol (E2)" }, target: "20-35", unit: "pg/mL", optimal: [20, 35], warning: [36, 50], bad: [51, 100], cat: "Hormonal", imp: { ro: "Necesar pentru oase și creier.", en: "Needed for bones and brain." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "dheas", name: { ro: "DHEA-S", en: "DHEA-S" }, target: "250-400", unit: "μg/dL", optimal: [250, 400], warning: [150, 249], bad: [0, 149], cat: "Hormonal", imp: { ro: "Hormon anti-îmbătrânire.", en: "Anti-aging hormone." }, freq: { ro: "Anual", en: "Annual" } },
-  { key: "tsh", name: { ro: "TSH", en: "TSH" }, target: "0.5-2.0", unit: "mIU/L", optimal: [0.5, 2], warning: [2.1, 4], bad: [4.1, 20], cat: "Hormonal", imp: { ro: "Funcția tiroidiană.", en: "Thyroid function." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "hdl", name: { ro: "HDL-C", en: "HDL-C" }, target: "> 50", unit: "mg/dL", optimal: [50, 100], warning: [40, 49], bad: [0, 39], cat: "Cardiovascular", imp: { ro: "Colesterolul protector.", en: "Protective cholesterol." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "totalchol", name: { ro: "Colesterol Total", en: "Total Cholesterol" }, target: "< 200", unit: "mg/dL", optimal: [120, 200], warning: [201, 239], bad: [240, 400], cat: "Cardiovascular", imp: { ro: "Privit in context cu HDL/LDL.", en: "View in HDL/LDL context." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "trig", name: { ro: "Trigliceride", en: "Triglycerides" }, target: "< 80", unit: "mg/dL", optimal: [0, 80], warning: [81, 150], bad: [151, 500], cat: "Cardiovascular", imp: { ro: "Rezistenta insulina si risc cardiac.", en: "Insulin resistance and cardiac risk." }, freq: { ro: "3 luni", en: "3 months" } },
+  { key: "vldl", name: { ro: "VLDL", en: "VLDL" }, target: "< 20", unit: "mg/dL", optimal: [0, 20], warning: [21, 30], bad: [31, 80], cat: "Cardiovascular", imp: { ro: "Particule aterogene.", en: "Atherogenic particles." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "bnp", name: { ro: "NT-proBNP", en: "NT-proBNP" }, target: "< 125", unit: "pg/mL", optimal: [0, 75], warning: [76, 125], bad: [126, 5000], cat: "Cardiovascular", imp: { ro: "Marker insuficienta cardiaca.", en: "Heart failure marker." }, freq: { ro: "Anual", en: "Annual" } },
+  // HORMONAL
+  { key: "testTotal", name: { ro: "Testosteron Total", en: "Total Testosterone" }, target: "500-900", unit: "ng/dL", optimal: [500, 900], warning: [300, 499], bad: [0, 299], cat: "Hormonal", imp: { ro: "Masa musculara, energie.", en: "Muscle mass, energy." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "testFree", name: { ro: "Testosteron Liber", en: "Free Testosterone" }, target: "15-25", unit: "pg/mL", optimal: [15, 25], warning: [10, 14.9], bad: [0, 9.9], cat: "Hormonal", imp: { ro: "Fractiunea activa.", en: "Active fraction." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "shbg", name: { ro: "SHBG", en: "SHBG" }, target: "20-40", unit: "nmol/L", optimal: [20, 40], warning: [41, 60], bad: [61, 150], cat: "Hormonal", imp: { ro: "Leaga testosteronul.", en: "Binds testosterone." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "e2", name: { ro: "Estradiol (E2)", en: "Estradiol (E2)" }, target: "20-35", unit: "pg/mL", optimal: [20, 35], warning: [36, 50], bad: [51, 100], cat: "Hormonal", imp: { ro: "Necesar pentru oase si creier.", en: "Needed for bones and brain." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "dheas", name: { ro: "DHEA-S", en: "DHEA-S" }, target: "250-400", unit: "ug/dL", optimal: [250, 400], warning: [150, 249], bad: [0, 149], cat: "Hormonal", imp: { ro: "Hormon anti-imbatranire.", en: "Anti-aging hormone." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "tsh", name: { ro: "TSH", en: "TSH" }, target: "0.5-2.0", unit: "mIU/L", optimal: [0.5, 2], warning: [2.1, 4], bad: [4.1, 20], cat: "Hormonal", imp: { ro: "Functia tiroidiana.", en: "Thyroid function." }, freq: { ro: "Anual", en: "Annual" } },
   { key: "ft3", name: { ro: "Free T3", en: "Free T3" }, target: "3.0-4.0", unit: "pg/mL", optimal: [3, 4], warning: [2.5, 2.9], bad: [0, 2.4], cat: "Hormonal", imp: { ro: "Hormonul tiroidian activ.", en: "Active thyroid hormone." }, freq: { ro: "Anual", en: "Annual" } },
-  { key: "vitd", name: { ro: "Vitamina D", en: "Vitamin D" }, target: "50-80", unit: "ng/mL", optimal: [50, 80], warning: [30, 49], bad: [0, 29], cat: "Nutrienți", imp: { ro: "Imunomodulator, anti-cancer.", en: "Immunomodulator, anti-cancer." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "mgrbc", name: { ro: "Magneziu RBC", en: "RBC Magnesium" }, target: "5.5-6.5", unit: "mg/dL", optimal: [5.5, 6.5], warning: [4.5, 5.4], bad: [0, 4.4], cat: "Nutrienți", imp: { ro: "Reflectă stocurile reale.", en: "Reflects true stores." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "omega3", name: { ro: "Omega-3 Index", en: "Omega-3 Index" }, target: "> 8", unit: "%", optimal: [8, 15], warning: [5, 7.9], bad: [0, 4.9], cat: "Nutrienți", imp: { ro: "Protecție cardiovasculară și cerebrală.", en: "Cardiovascular and brain protection." }, freq: { ro: "Anual", en: "Annual" } },
-  { key: "ferritin", name: { ro: "Feritină", en: "Ferritin" }, target: "40-100", unit: "ng/mL", optimal: [40, 100], warning: [101, 200], bad: [201, 1000], cat: "Nutrienți", imp: { ro: "Prea mare = oxidare.", en: "Too high = oxidation." }, freq: { ro: "Anual", en: "Annual" } },
-  { key: "egfr", name: { ro: "eGFR", en: "eGFR" }, target: "> 90", unit: "mL/min", optimal: [90, 150], warning: [60, 89], bad: [0, 59], cat: "Organe", imp: { ro: "Funcția renală.", en: "Kidney function." }, freq: { ro: "Anual", en: "Annual" } },
-  { key: "alt", name: { ro: "ALT", en: "ALT" }, target: "< 25", unit: "U/L", optimal: [0, 25], warning: [26, 40], bad: [41, 200], cat: "Organe", imp: { ro: "Funcția hepatică.", en: "Liver function." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "ft4", name: { ro: "Free T4", en: "Free T4" }, target: "1.0-1.5", unit: "ng/dL", optimal: [1, 1.5], warning: [0.8, 0.99], bad: [0, 0.79], cat: "Hormonal", imp: { ro: "Hormon tiroidian precursor.", en: "Precursor thyroid hormone." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "cortisol", name: { ro: "Cortizol (dimineata)", en: "Cortisol (morning)" }, target: "10-18", unit: "ug/dL", optimal: [10, 18], warning: [19, 25], bad: [26, 50], cat: "Hormonal", imp: { ro: "Hormon de stres. Prea mare = catabolism.", en: "Stress hormone. Too high = catabolism." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "igf1", name: { ro: "IGF-1", en: "IGF-1" }, target: "100-200", unit: "ng/mL", optimal: [100, 200], warning: [201, 300], bad: [301, 500], cat: "Hormonal", imp: { ro: "Factor de crestere. Moderat = longevitate.", en: "Growth factor. Moderate = longevity." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "prolactin", name: { ro: "Prolactina", en: "Prolactin" }, target: "2-15", unit: "ng/mL", optimal: [2, 15], warning: [16, 25], bad: [26, 100], cat: "Hormonal", imp: { ro: "Crescut = posibil prolactinom.", en: "Elevated = possible prolactinoma." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "lh", name: { ro: "LH", en: "LH" }, target: "2-9", unit: "mIU/mL", optimal: [2, 9], warning: [9.1, 15], bad: [15.1, 50], cat: "Hormonal", imp: { ro: "Hormon stimulator testicular.", en: "Testicular stimulating hormone." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "fsh", name: { ro: "FSH", en: "FSH" }, target: "1.5-12", unit: "mIU/mL", optimal: [1.5, 12], warning: [12.1, 20], bad: [20.1, 100], cat: "Hormonal", imp: { ro: "Functia reproductiva.", en: "Reproductive function." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "pth", name: { ro: "Parathormon (PTH)", en: "Parathyroid Hormone" }, target: "15-50", unit: "pg/mL", optimal: [15, 50], warning: [51, 65], bad: [66, 200], cat: "Hormonal", imp: { ro: "Metabolismul calciului si oaselor.", en: "Calcium and bone metabolism." }, freq: { ro: "Anual", en: "Annual" } },
+  // NUTRIENTI
+  { key: "vitd", name: { ro: "Vitamina D (25-OH)", en: "Vitamin D (25-OH)" }, target: "50-80", unit: "ng/mL", optimal: [50, 80], warning: [30, 49], bad: [0, 29], cat: "Nutrienti", imp: { ro: "Imunomodulator, anti-cancer.", en: "Immunomodulator, anti-cancer." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "vitb12", name: { ro: "Vitamina B12", en: "Vitamin B12" }, target: "500-1000", unit: "pg/mL", optimal: [500, 1000], warning: [300, 499], bad: [0, 299], cat: "Nutrienti", imp: { ro: "Critik cu Metformina. Neurologic.", en: "Critical with Metformin. Neurological." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "folate", name: { ro: "Acid Folic (Folat)", en: "Folate" }, target: "> 10", unit: "ng/mL", optimal: [10, 30], warning: [5, 9.9], bad: [0, 4.9], cat: "Nutrienti", imp: { ro: "Metilare ADN. Esential cu B12.", en: "DNA methylation. Essential with B12." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "mgrbc", name: { ro: "Magneziu RBC", en: "RBC Magnesium" }, target: "5.5-6.5", unit: "mg/dL", optimal: [5.5, 6.5], warning: [4.5, 5.4], bad: [0, 4.4], cat: "Nutrienti", imp: { ro: "Reflecta stocurile reale.", en: "Reflects true stores." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "mgserum", name: { ro: "Magneziu Seric", en: "Serum Magnesium" }, target: "2.0-2.5", unit: "mg/dL", optimal: [2, 2.5], warning: [1.7, 1.99], bad: [0, 1.69], cat: "Nutrienti", imp: { ro: "Mai putin precis decat RBC.", en: "Less precise than RBC." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "omega3", name: { ro: "Omega-3 Index", en: "Omega-3 Index" }, target: "> 8", unit: "%", optimal: [8, 15], warning: [5, 7.9], bad: [0, 4.9], cat: "Nutrienti", imp: { ro: "Protectie cardiovasculara.", en: "Cardiovascular protection." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "ferritin", name: { ro: "Feritina", en: "Ferritin" }, target: "40-100", unit: "ng/mL", optimal: [40, 100], warning: [101, 200], bad: [201, 1000], cat: "Nutrienti", imp: { ro: "Prea mare = oxidare.", en: "Too high = oxidation." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "iron", name: { ro: "Fier Seric", en: "Serum Iron" }, target: "60-170", unit: "ug/dL", optimal: [60, 170], warning: [40, 59], bad: [0, 39], cat: "Nutrienti", imp: { ro: "Deficit sau exces = probleme.", en: "Deficiency or excess = problems." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "tibc", name: { ro: "TIBC", en: "TIBC" }, target: "250-370", unit: "ug/dL", optimal: [250, 370], warning: [371, 450], bad: [451, 600], cat: "Nutrienti", imp: { ro: "Capacitate legare fier.", en: "Iron binding capacity." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "transferrin", name: { ro: "Saturatie Transferina", en: "Transferrin Saturation" }, target: "20-45", unit: "%", optimal: [20, 45], warning: [15, 19], bad: [0, 14], cat: "Nutrienti", imp: { ro: "Transport fier.", en: "Iron transport." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "zinc", name: { ro: "Zinc", en: "Zinc" }, target: "70-120", unit: "ug/dL", optimal: [70, 120], warning: [60, 69], bad: [0, 59], cat: "Nutrienti", imp: { ro: "Imunitate, testosteron.", en: "Immunity, testosterone." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "selenium", name: { ro: "Seleniu", en: "Selenium" }, target: "70-150", unit: "ug/L", optimal: [70, 150], warning: [50, 69], bad: [0, 49], cat: "Nutrienti", imp: { ro: "Tiroida, antioxidant.", en: "Thyroid, antioxidant." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "copper", name: { ro: "Cupru", en: "Copper" }, target: "70-140", unit: "ug/dL", optimal: [70, 140], warning: [141, 180], bad: [181, 300], cat: "Nutrienti", imp: { ro: "Raport Zinc:Cupru important.", en: "Zinc:Copper ratio important." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "vita", name: { ro: "Vitamina A (Retinol)", en: "Vitamin A (Retinol)" }, target: "30-65", unit: "ug/dL", optimal: [30, 65], warning: [20, 29], bad: [0, 19], cat: "Nutrienti", imp: { ro: "Vedere, imunitate, piele.", en: "Vision, immunity, skin." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "vite", name: { ro: "Vitamina E", en: "Vitamin E" }, target: "5.5-17", unit: "mg/L", optimal: [5.5, 17], warning: [3, 5.4], bad: [0, 2.9], cat: "Nutrienti", imp: { ro: "Antioxidant liposolubil.", en: "Fat-soluble antioxidant." }, freq: { ro: "Anual", en: "Annual" } },
+  // ORGANE
+  { key: "egfr", name: { ro: "eGFR", en: "eGFR" }, target: "> 90", unit: "mL/min", optimal: [90, 150], warning: [60, 89], bad: [0, 59], cat: "Organe", imp: { ro: "Functia renala.", en: "Kidney function." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "creatinine", name: { ro: "Creatinina", en: "Creatinine" }, target: "0.7-1.2", unit: "mg/dL", optimal: [0.7, 1.2], warning: [1.21, 1.5], bad: [1.51, 5], cat: "Organe", imp: { ro: "Functia renala. Suplimente creatina cresc.", en: "Kidney function. Creatine supps elevate." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "bun", name: { ro: "BUN (Uree)", en: "BUN (Urea)" }, target: "7-20", unit: "mg/dL", optimal: [7, 20], warning: [21, 30], bad: [31, 100], cat: "Organe", imp: { ro: "Functia renala si hidratare.", en: "Kidney function and hydration." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "alt", name: { ro: "ALT (GPT)", en: "ALT (GPT)" }, target: "< 25", unit: "U/L", optimal: [0, 25], warning: [26, 40], bad: [41, 200], cat: "Organe", imp: { ro: "Functia hepatica.", en: "Liver function." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "ast", name: { ro: "AST (GOT)", en: "AST (GOT)" }, target: "< 25", unit: "U/L", optimal: [0, 25], warning: [26, 40], bad: [41, 200], cat: "Organe", imp: { ro: "Ficat si muschi.", en: "Liver and muscle." }, freq: { ro: "6 luni", en: "6 months" } },
   { key: "ggt", name: { ro: "GGT", en: "GGT" }, target: "< 20", unit: "U/L", optimal: [0, 20], warning: [21, 40], bad: [41, 200], cat: "Organe", imp: { ro: "Stres oxidativ hepatic.", en: "Hepatic oxidative stress." }, freq: { ro: "6 luni", en: "6 months" } },
-  { key: "cysc", name: { ro: "Cystatin C", en: "Cystatin C" }, target: "< 0.9", unit: "mg/L", optimal: [0, 0.9], warning: [0.91, 1.2], bad: [1.21, 5], cat: "Organe", imp: { ro: "Mai precis decât creatinina.", en: "More precise than creatinine." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "alp", name: { ro: "Fosfataza Alcalina", en: "Alkaline Phosphatase" }, target: "40-100", unit: "U/L", optimal: [40, 100], warning: [101, 130], bad: [131, 300], cat: "Organe", imp: { ro: "Ficat si oase.", en: "Liver and bones." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "tbili", name: { ro: "Bilirubina Totala", en: "Total Bilirubin" }, target: "0.2-1.0", unit: "mg/dL", optimal: [0.2, 1], warning: [1.1, 1.5], bad: [1.6, 10], cat: "Organe", imp: { ro: "Functia hepatica. Usor crescut = antioxidant.", en: "Liver function. Mildly elevated = antioxidant." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "albumin", name: { ro: "Albumina", en: "Albumin" }, target: "4.0-5.0", unit: "g/dL", optimal: [4, 5], warning: [3.5, 3.99], bad: [0, 3.49], cat: "Organe", imp: { ro: "Status nutritional si hepatic.", en: "Nutritional and liver status." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "totalprotein", name: { ro: "Proteine Totale", en: "Total Protein" }, target: "6.0-8.0", unit: "g/dL", optimal: [6, 8], warning: [5.5, 5.99], bad: [0, 5.49], cat: "Organe", imp: { ro: "Status nutritional general.", en: "General nutritional status." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "cysc", name: { ro: "Cystatin C", en: "Cystatin C" }, target: "< 0.9", unit: "mg/L", optimal: [0, 0.9], warning: [0.91, 1.2], bad: [1.21, 5], cat: "Organe", imp: { ro: "Mai precis decat creatinina.", en: "More precise than creatinine." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "lipase", name: { ro: "Lipaza", en: "Lipase" }, target: "< 60", unit: "U/L", optimal: [0, 60], warning: [61, 100], bad: [101, 500], cat: "Organe", imp: { ro: "Functia pancreatica.", en: "Pancreatic function." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "amylase", name: { ro: "Amilaza", en: "Amylase" }, target: "25-125", unit: "U/L", optimal: [25, 125], warning: [126, 200], bad: [201, 1000], cat: "Organe", imp: { ro: "Pancreas. Monitorizare cu GLP-1.", en: "Pancreas. Monitor with GLP-1." }, freq: { ro: "Anual", en: "Annual" } },
+  // HEMOGRAMA
+  { key: "wbc", name: { ro: "Leucocite (WBC)", en: "White Blood Cells" }, target: "4.5-6.5", unit: "x10^3/uL", optimal: [4.5, 6.5], warning: [3.5, 4.49], bad: [0, 3.49], cat: "Hemograma", imp: { ro: "Sistemul imunitar.", en: "Immune system." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "rbc", name: { ro: "Eritrocite (RBC)", en: "Red Blood Cells" }, target: "4.5-5.5", unit: "x10^6/uL", optimal: [4.5, 5.5], warning: [4, 4.49], bad: [0, 3.99], cat: "Hemograma", imp: { ro: "Transport oxigen.", en: "Oxygen transport." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "hgb", name: { ro: "Hemoglobina", en: "Hemoglobin" }, target: "14-17", unit: "g/dL", optimal: [14, 17], warning: [12, 13.9], bad: [0, 11.9], cat: "Hemograma", imp: { ro: "Capacitate transport oxigen.", en: "Oxygen carrying capacity." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "hct", name: { ro: "Hematocrit", en: "Hematocrit" }, target: "40-50", unit: "%", optimal: [40, 50], warning: [36, 39], bad: [0, 35], cat: "Hemograma", imp: { ro: "Volum eritrocite. Monitorizare TRT.", en: "RBC volume. Monitor on TRT." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "plt", name: { ro: "Trombocite (PLT)", en: "Platelets" }, target: "150-300", unit: "x10^3/uL", optimal: [150, 300], warning: [100, 149], bad: [0, 99], cat: "Hemograma", imp: { ro: "Coagulare sange.", en: "Blood clotting." }, freq: { ro: "6 luni", en: "6 months" } },
+  { key: "mcv", name: { ro: "MCV", en: "MCV" }, target: "80-96", unit: "fL", optimal: [80, 96], warning: [97, 100], bad: [101, 120], cat: "Hemograma", imp: { ro: "Marimea eritrocitelor. Mare = deficit B12.", en: "RBC size. Large = B12 deficiency." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "mch", name: { ro: "MCH", en: "MCH" }, target: "27-33", unit: "pg", optimal: [27, 33], warning: [24, 26.9], bad: [0, 23.9], cat: "Hemograma", imp: { ro: "Hemoglobina per eritrocit.", en: "Hemoglobin per RBC." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "mchc", name: { ro: "MCHC", en: "MCHC" }, target: "32-36", unit: "g/dL", optimal: [32, 36], warning: [30, 31.9], bad: [0, 29.9], cat: "Hemograma", imp: { ro: "Concentratie hemoglobina.", en: "Hemoglobin concentration." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "neutrophils", name: { ro: "Neutrofile", en: "Neutrophils" }, target: "40-70", unit: "%", optimal: [40, 70], warning: [30, 39], bad: [0, 29], cat: "Hemograma", imp: { ro: "Prima linie de aparare.", en: "First line of defense." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "lymphocytes", name: { ro: "Limfocite", en: "Lymphocytes" }, target: "20-40", unit: "%", optimal: [20, 40], warning: [15, 19], bad: [0, 14], cat: "Hemograma", imp: { ro: "Imunitate adaptativa.", en: "Adaptive immunity." }, freq: { ro: "Anual", en: "Annual" } },
+  // COAGULARE
+  { key: "pt", name: { ro: "Timp Protrombina (PT)", en: "Prothrombin Time" }, target: "11-13.5", unit: "sec", optimal: [11, 13.5], warning: [13.6, 16], bad: [16.1, 30], cat: "Coagulare", imp: { ro: "Coagulare extrinseca.", en: "Extrinsic coagulation." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "inr", name: { ro: "INR", en: "INR" }, target: "0.9-1.1", unit: "", optimal: [0.9, 1.1], warning: [1.11, 1.5], bad: [1.51, 5], cat: "Coagulare", imp: { ro: "Standardizat. Important cu anticoagulante.", en: "Standardized. Important with anticoagulants." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "aptt", name: { ro: "aPTT", en: "aPTT" }, target: "25-35", unit: "sec", optimal: [25, 35], warning: [36, 45], bad: [46, 100], cat: "Coagulare", imp: { ro: "Coagulare intrinseca.", en: "Intrinsic coagulation." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "ddimer", name: { ro: "D-Dimer", en: "D-Dimer" }, target: "< 0.5", unit: "ug/mL", optimal: [0, 0.5], warning: [0.51, 1], bad: [1.1, 10], cat: "Coagulare", imp: { ro: "Marker tromboza. Creste cu varsta.", en: "Thrombosis marker. Increases with age." }, freq: { ro: "Anual", en: "Annual" } },
+  // ELECTROLITI
+  { key: "sodium", name: { ro: "Sodiu (Na)", en: "Sodium (Na)" }, target: "136-145", unit: "mEq/L", optimal: [136, 145], warning: [133, 135], bad: [0, 132], cat: "Electroliti", imp: { ro: "Echilibru hidric.", en: "Fluid balance." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "potassium", name: { ro: "Potasiu (K)", en: "Potassium (K)" }, target: "3.5-5.0", unit: "mEq/L", optimal: [3.5, 5], warning: [3, 3.49], bad: [0, 2.99], cat: "Electroliti", imp: { ro: "Functia cardiaca si musculara.", en: "Heart and muscle function." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "calcium", name: { ro: "Calciu Total", en: "Total Calcium" }, target: "8.5-10.2", unit: "mg/dL", optimal: [8.5, 10.2], warning: [10.3, 11], bad: [11.1, 15], cat: "Electroliti", imp: { ro: "Oase, nervi, muschi.", en: "Bones, nerves, muscles." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "phosphorus", name: { ro: "Fosfor", en: "Phosphorus" }, target: "2.5-4.5", unit: "mg/dL", optimal: [2.5, 4.5], warning: [4.6, 5.5], bad: [5.6, 10], cat: "Electroliti", imp: { ro: "Oase si energie celulara.", en: "Bones and cellular energy." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "chloride", name: { ro: "Clor (Cl)", en: "Chloride (Cl)" }, target: "98-106", unit: "mEq/L", optimal: [98, 106], warning: [95, 97], bad: [0, 94], cat: "Electroliti", imp: { ro: "Echilibru acid-baza.", en: "Acid-base balance." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "co2", name: { ro: "CO2 (Bicarbonat)", en: "CO2 (Bicarbonate)" }, target: "22-28", unit: "mEq/L", optimal: [22, 28], warning: [18, 21], bad: [0, 17], cat: "Electroliti", imp: { ro: "Echilibru acid-baza.", en: "Acid-base balance." }, freq: { ro: "Anual", en: "Annual" } },
+  // TUMORI
+  { key: "psa", name: { ro: "PSA Total", en: "Total PSA" }, target: "< 1.5", unit: "ng/mL", optimal: [0, 1.5], warning: [1.6, 4], bad: [4.1, 100], cat: "Markeri Tumorali", imp: { ro: "Screening prostata. Obligatoriu 40+.", en: "Prostate screening. Mandatory 40+." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "cea", name: { ro: "CEA", en: "CEA" }, target: "< 3.0", unit: "ng/mL", optimal: [0, 3], warning: [3.1, 5], bad: [5.1, 100], cat: "Markeri Tumorali", imp: { ro: "Colorectal, pulmonar.", en: "Colorectal, pulmonary." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "afp", name: { ro: "AFP", en: "AFP" }, target: "< 10", unit: "ng/mL", optimal: [0, 10], warning: [11, 20], bad: [21, 1000], cat: "Markeri Tumorali", imp: { ro: "Ficat.", en: "Liver." }, freq: { ro: "Anual", en: "Annual" } },
+  { key: "ca199", name: { ro: "CA 19-9", en: "CA 19-9" }, target: "< 37", unit: "U/mL", optimal: [0, 37], warning: [38, 100], bad: [101, 5000], cat: "Markeri Tumorali", imp: { ro: "Pancreas, tract biliar.", en: "Pancreas, biliary tract." }, freq: { ro: "Anual", en: "Annual" } },
 ];
 
-const CATS = ["Metabolic", "Inflamație", "Cardiovascular", "Hormonal", "Nutrienți", "Organe"];
-const CAT_EN = { Metabolic: "Metabolic", Inflamație: "Inflammation", Cardiovascular: "Cardiovascular", Hormonal: "Hormonal", Nutrienți: "Nutrients", Organe: "Organs" };
+const CATS = ["Metabolic", "Inflamatie", "Cardiovascular", "Hormonal", "Nutrienti", "Organe", "Hemograma", "Coagulare", "Electroliti", "Markeri Tumorali"];
+const CAT_EN = { Metabolic: "Metabolic", Inflamatie: "Inflammation", Cardiovascular: "Cardiovascular", Hormonal: "Hormonal", Nutrienti: "Nutrients", Organe: "Organs", Hemograma: "CBC", Coagulare: "Coagulation", Electroliti: "Electrolytes", "Markeri Tumorali": "Tumor Markers" };
 const CC = {
-  Metabolic: { bg: "#1a2332", border: "#3b82f6", text: "#60a5fa" }, Inflamație: { bg: "#2d1a1a", border: "#ef4444", text: "#f87171" },
+  Metabolic: { bg: "#1a2332", border: "#3b82f6", text: "#60a5fa" }, Inflamatie: { bg: "#2d1a1a", border: "#ef4444", text: "#f87171" },
   Cardiovascular: { bg: "#1a2d1a", border: "#22c55e", text: "#4ade80" }, Hormonal: { bg: "#2d2a1a", border: "#eab308", text: "#facc15" },
-  Nutrienți: { bg: "#1a2d2d", border: "#06b6d4", text: "#22d3ee" }, Organe: { bg: "#2a1a2d", border: "#a855f7", text: "#c084fc" },
+  Nutrienti: { bg: "#1a2d2d", border: "#06b6d4", text: "#22d3ee" }, Organe: { bg: "#2a1a2d", border: "#a855f7", text: "#c084fc" },
+  Hemograma: { bg: "#1a2228", border: "#f97316", text: "#fb923c" }, Coagulare: { bg: "#2d1a28", border: "#ec4899", text: "#f472b6" },
+  Electroliti: { bg: "#1a2d28", border: "#14b8a6", text: "#2dd4bf" }, "Markeri Tumorali": { bg: "#2d1a1a", border: "#dc2626", text: "#f87171" },
 };
 
 const PROTOCOLS = [
@@ -241,6 +314,154 @@ export default function App() {
   const delWhoop = (date) => { const u = whoopData.filter(e => e.date !== date); setWhoopData(u); saveWhoop(u); };
   const delLab = (ts) => { const u = labData.filter(e => e.ts !== ts); setLabData(u); saveLabs(u); };
 
+  const fileRef = useRef(null);
+  const [importMsg, setImportMsg] = useState("");
+
+  // WHOOP CSV IMPORT
+  const handleFileImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      if (name.endsWith(".csv")) {
+        parseWhoopCSV(text);
+      } else if (name.endsWith(".xml")) {
+        parseAppleHealthXML(text);
+      } else {
+        setImportMsg(lang === "ro" ? "Format invalid. Foloseste CSV (WHOOP) sau XML (Apple Health)." : "Invalid format. Use CSV (WHOOP) or XML (Apple Health).");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const parseWhoopCSV = (text) => {
+    try {
+      const lines = text.split("\n");
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
+      const entries = {};
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(",").map(v => v.trim().replace(/"/g, ""));
+        if (vals.length < 2) continue;
+        const dateIdx = headers.findIndex(h => h.includes("date") || h.includes("cycle start") || h.includes("day"));
+        const dateRaw = vals[dateIdx] || vals[0];
+        const date = dateRaw.substring(0, 10);
+        if (!date || date.length < 8) continue;
+        if (!entries[date]) entries[date] = { date, ts: Date.now() };
+        headers.forEach((h, idx) => {
+          const v = parseFloat(vals[idx]);
+          if (isNaN(v)) return;
+          if (h.includes("recovery") && h.includes("score")) entries[date].recovery = v;
+          else if (h.includes("hrv") || h.includes("heart rate variability")) entries[date].hrv = v;
+          else if ((h.includes("resting") && h.includes("heart")) || h === "rhr") entries[date].rhr = v;
+          else if (h.includes("strain") && !h.includes("muscular")) entries[date].strain = Math.round(v * 10) / 10;
+          else if (h.includes("sleep") && h.includes("performance")) entries[date].sleepScore = v;
+          else if (h.includes("light sleep") || (h.includes("deep") && h.includes("sws"))) { /* skip */ }
+          else if (h.includes("deep") || h.includes("sws")) entries[date].deepSleep = Math.round(v);
+          else if (h.includes("rem")) entries[date].remSleep = Math.round(v);
+          else if (h.includes("sleep") && h.includes("duration") || h.includes("total sleep")) entries[date].sleepH = Math.round(v / 3600 * 10) / 10;
+          else if (h.includes("respiratory") || h.includes("resp")) entries[date].resp = Math.round(v * 10) / 10;
+          else if (h.includes("spo2") || h.includes("oxygen")) entries[date].spo2 = Math.round(v * 10) / 10;
+          else if (h.includes("skin temp")) entries[date].skinT = Math.round(v * 10) / 10;
+          else if (h.includes("calorie") || h.includes("kilojoule")) entries[date].cal = Math.round(v);
+        });
+      }
+      const newEntries = Object.values(entries).filter(e => Object.keys(e).length > 2);
+      if (newEntries.length === 0) {
+        setImportMsg(lang === "ro" ? "Nu am gasit date WHOOP in fisier." : "No WHOOP data found in file.");
+        return;
+      }
+      const merged = [...whoopData];
+      newEntries.forEach(ne => {
+        const idx = merged.findIndex(e => e.date === ne.date);
+        if (idx >= 0) merged[idx] = { ...merged[idx], ...ne };
+        else merged.push(ne);
+      });
+      merged.sort((a, b) => a.date.localeCompare(b.date));
+      setWhoopData(merged);
+      saveWhoop(merged);
+      setImportMsg(lang === "ro" ? `Import reusit! ${newEntries.length} zile importate din WHOOP CSV.` : `Success! ${newEntries.length} days imported from WHOOP CSV.`);
+      setTimeout(() => setImportMsg(""), 5000);
+    } catch (err) {
+      setImportMsg(lang === "ro" ? "Eroare la procesarea CSV." : "Error processing CSV.");
+    }
+  };
+
+  const parseAppleHealthXML = (text) => {
+    try {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, "text/xml");
+      const records = xml.querySelectorAll("Record");
+      const entries = {};
+      const getDate = (r) => {
+        const d = r.getAttribute("endDate") || r.getAttribute("startDate") || "";
+        return d.substring(0, 10);
+      };
+      records.forEach(r => {
+        const type = r.getAttribute("type") || "";
+        const val = parseFloat(r.getAttribute("value"));
+        const date = getDate(r);
+        if (!date || isNaN(val)) return;
+        if (!entries[date]) entries[date] = { date, ts: Date.now(), _counts: {} };
+        const e = entries[date];
+        const addAvg = (key, v) => {
+          if (!e._counts[key]) { e._counts[key] = 0; e[key] = 0; }
+          e._counts[key]++;
+          e[key] = e[key] + (v - e[key]) / e._counts[key];
+        };
+        if (type.includes("HeartRateVariabilitySDNN")) addAvg("hrv", val * 1000);
+        else if (type.includes("RestingHeartRate")) addAvg("rhr", val);
+        else if (type.includes("RespiratoryRate")) addAvg("resp", val);
+        else if (type.includes("OxygenSaturation")) addAvg("spo2", val * 100);
+        else if (type.includes("BodyTemperature")) addAvg("skinT", val);
+        else if (type.includes("ActiveEnergyBurned")) e.cal = (e.cal || 0) + val;
+      });
+      const sleepRecords = xml.querySelectorAll('Record[type="HKCategoryTypeIdentifierSleepAnalysis"]');
+      sleepRecords.forEach(r => {
+        const date = getDate(r);
+        const val = r.getAttribute("value") || "";
+        const start = new Date(r.getAttribute("startDate"));
+        const end = new Date(r.getAttribute("endDate"));
+        const mins = (end - start) / 60000;
+        if (!date || isNaN(mins) || mins <= 0) return;
+        if (!entries[date]) entries[date] = { date, ts: Date.now(), _counts: {} };
+        if (val.includes("Deep") || val.includes("deep")) entries[date].deepSleep = (entries[date].deepSleep || 0) + Math.round(mins);
+        else if (val.includes("REM") || val.includes("rem")) entries[date].remSleep = (entries[date].remSleep || 0) + Math.round(mins);
+        if (val.includes("Asleep") || val.includes("Deep") || val.includes("Core") || val.includes("REM")) {
+          entries[date].sleepH = Math.round(((entries[date].sleepH || 0) * 60 + mins) / 60 * 10) / 10;
+        }
+      });
+      const newEntries = Object.values(entries).map(e => {
+        delete e._counts;
+        if (e.hrv) e.hrv = Math.round(e.hrv);
+        if (e.rhr) e.rhr = Math.round(e.rhr);
+        if (e.resp) e.resp = Math.round(e.resp * 10) / 10;
+        if (e.spo2) e.spo2 = Math.round(e.spo2 * 10) / 10;
+        if (e.cal) e.cal = Math.round(e.cal);
+        return e;
+      }).filter(e => Object.keys(e).length > 2);
+      if (newEntries.length === 0) {
+        setImportMsg(lang === "ro" ? "Nu am gasit date de sanatate in XML." : "No health data found in XML.");
+        return;
+      }
+      const merged = [...whoopData];
+      newEntries.forEach(ne => {
+        const idx = merged.findIndex(e => e.date === ne.date);
+        if (idx >= 0) merged[idx] = { ...merged[idx], ...ne };
+        else merged.push(ne);
+      });
+      merged.sort((a, b) => a.date.localeCompare(b.date));
+      setWhoopData(merged);
+      saveWhoop(merged);
+      setImportMsg(lang === "ro" ? `Import reusit! ${newEntries.length} zile importate din Apple Health.` : `Success! ${newEntries.length} days imported from Apple Health.`);
+      setTimeout(() => setImportMsg(""), 5000);
+    } catch (err) {
+      setImportMsg(lang === "ro" ? "Eroare la procesarea XML." : "Error processing XML.");
+    }
+  };
+
   const latestW = whoopData.length ? whoopData[whoopData.length - 1] : null;
   const latestL = labData.length ? labData[labData.length - 1] : null;
 
@@ -349,9 +570,26 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     const getTrend = (k) => whoopData.filter(e => e[k]).map(e => ({ v: parseFloat(e[k]), date: e.date })).slice(-14);
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #1a2810, #0a1628)", border: "1px solid rgba(34,197,94,0.2)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div><h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>⌚ {t.whoop.title}</h2><p style={{ color: "#64748b", margin: "4px 0 0", fontSize: 11 }}>{t.whoop.subtitle} • {whoopData.length} {t.whoop.entries}</p></div>
-          <button onClick={() => { setShowWF(!showWF); setWForm({}); }} style={sty.btn(showWF ? "#ef4444" : "#22c55e")}>{showWF ? t.whoop.cancel : t.whoop.addData}</button>
+        <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #1a2810, #0a1628)", border: "1px solid rgba(34,197,94,0.2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div><h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>⌚ {t.whoop.title}</h2><p style={{ color: "#64748b", margin: "4px 0 0", fontSize: 11 }}>{t.whoop.subtitle} • {whoopData.length} {t.whoop.entries}</p></div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => fileRef.current?.click()} style={sty.btn("#3b82f6")}>{lang === "ro" ? "📂 Import Fisier" : "📂 Import File"}</button>
+              <button onClick={() => { setShowWF(!showWF); setWForm({}); }} style={sty.btn(showWF ? "#ef4444" : "#22c55e")}>{showWF ? t.whoop.cancel : t.whoop.addData}</button>
+            </div>
+          </div>
+          <input ref={fileRef} type="file" accept=".csv,.xml" onChange={handleFileImport} style={{ display: "none" }} />
+          {importMsg && (
+            <div style={{ marginTop: 10, background: importMsg.includes("reusit") || importMsg.includes("Success") ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)", color: importMsg.includes("reusit") || importMsg.includes("Success") ? "#4ade80" : "#f87171", padding: "8px 12px", borderRadius: 8, fontSize: 12 }}>{importMsg}</div>
+          )}
+          <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(59,130,246,0.08)", borderRadius: 8, border: "1px solid rgba(59,130,246,0.1)" }}>
+            <div style={{ color: "#60a5fa", fontSize: 10, fontWeight: 600, marginBottom: 4 }}>{lang === "ro" ? "CUM EXPORTI DATELE:" : "HOW TO EXPORT DATA:"}</div>
+            <div style={{ color: "#94a3b8", fontSize: 10, lineHeight: 1.6 }}>
+              {lang === "ro" 
+                ? "WHOOP: App > Settings > Data Export > CSV. Apple Health: iPhone > Health > Profil > Export All Health Data > ZIP (dezarhiveaza si uploadeaza export.xml)"
+                : "WHOOP: App > Settings > Data Export > CSV. Apple Health: iPhone > Health > Profile > Export All Health Data > ZIP (unzip and upload export.xml)"}
+            </div>
+          </div>
         </div>
         {showWF && (
           <div style={sty.card}>
