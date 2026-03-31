@@ -316,6 +316,78 @@ export default function App() {
 
   const fileRef = useRef(null);
   const [importMsg, setImportMsg] = useState("");
+  const labFileRef = useRef(null);
+  const [labImportMsg, setLabImportMsg] = useState("");
+  const [labParsing, setLabParsing] = useState(false);
+
+  const handleLabPdfImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    setLabParsing(true);
+    setLabImportMsg(lang === "ro" ? "AI analizeaza PDF-ul..." : "AI is analyzing the PDF...");
+
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(",")[1]);
+        r.onerror = () => rej(new Error("Read failed"));
+        r.readAsDataURL(file);
+      });
+
+      const bmList = BIOMARKERS.map(b => `${b.key}: ${b.name.en} (${b.unit})`).join(", ");
+      const mediaType = file.type === "application/pdf" ? "application/pdf" : file.type.startsWith("image/") ? file.type : "application/pdf";
+      const docType = file.type === "application/pdf" ? "document" : "image";
+
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: `You are a lab results extractor. Extract ALL blood test values from this document. Return ONLY a valid JSON object mapping biomarker keys to their numeric values. No text, no explanation, no markdown backticks. Just the JSON object. Available keys and their units: ${bmList}. Example output: {"glucose":85,"hba1c":5.1,"ldl":95}. If a value is not found, don't include it. Match test names intelligently - for example "Glucoza" or "Glicemie" maps to glucose, "Hemoglobina glicozilata" maps to hba1c, "Colesterol total" maps to totalchol, etc. Parse Romanian lab formats.`,
+          messages: [{
+            role: "user",
+            content: [
+              { type: docType, source: { type: "base64", media_type: mediaType, data: base64 } },
+              { type: "text", text: "Extract all blood test values from this document. Return ONLY a JSON object with the biomarker keys and numeric values." }
+            ]
+          }]
+        })
+      });
+
+      const data = await resp.json();
+      const replyText = data.reply || "";
+      const cleanJson = replyText.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleanJson);
+      const validKeys = BIOMARKERS.map(b => b.key);
+      const values = {};
+      let count = 0;
+      for (const [k, v] of Object.entries(parsed)) {
+        if (validKeys.includes(k) && v !== null && v !== undefined) {
+          values[k] = String(v);
+          count++;
+        }
+      }
+
+      if (count === 0) {
+        setLabImportMsg(lang === "ro" ? "Nu am gasit valori in document. Incearca o poza mai clara." : "No values found. Try a clearer image.");
+        setLabParsing(false);
+        setTimeout(() => setLabImportMsg(""), 5000);
+        return;
+      }
+
+      const entry = { date: new Date().toISOString().split("T")[0], lab: "PDF Import", values, ts: Date.now() };
+      const updated = [...labData, entry].sort((a, b) => a.date.localeCompare(b.date));
+      setLabData(updated);
+      saveLabs(updated);
+      setLabImportMsg(lang === "ro" ? `Import reusit! ${count} valori extrase automat din PDF.` : `Success! ${count} values extracted from PDF.`);
+      setTimeout(() => setLabImportMsg(""), 6000);
+    } catch (err) {
+      console.error("PDF parse error:", err);
+      setLabImportMsg(lang === "ro" ? "Eroare la procesarea fisierului. Incearca o poza sau alt PDF." : "Error processing file. Try a photo or different PDF.");
+      setTimeout(() => setLabImportMsg(""), 5000);
+    }
+    setLabParsing(false);
+  };
 
   // WHOOP CSV IMPORT
   const handleFileImport = (e) => {
@@ -661,9 +733,29 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     const filteredBM = BIOMARKERS.filter(b => cats.includes(b.cat));
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #280a1a, #0a1628)", border: "1px solid rgba(236,72,153,0.2)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div><h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>🧪 {t.labs.title}</h2><p style={{ color: "#64748b", margin: "4px 0 0", fontSize: 11 }}>{t.labs.subtitle} • {labData.length} {lang === "ro" ? "analize" : "tests"}</p></div>
-          <button onClick={() => { setShowLF(!showLF); setLForm({}); }} style={sty.btn(showLF ? "#ef4444" : "#ec4899")}>{showLF ? t.whoop.cancel : t.labs.addLab}</button>
+        <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #280a1a, #0a1628)", border: "1px solid rgba(236,72,153,0.2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div><h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>🧪 {t.labs.title}</h2><p style={{ color: "#64748b", margin: "4px 0 0", fontSize: 11 }}>{t.labs.subtitle} • {labData.length} {lang === "ro" ? "analize" : "tests"}</p></div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => labFileRef.current?.click()} disabled={labParsing} style={{ ...sty.btn("#8b5cf6"), opacity: labParsing ? 0.5 : 1 }}>{labParsing ? "⏳..." : (lang === "ro" ? "📄 Import PDF/Foto" : "📄 Import PDF/Photo")}</button>
+              <button onClick={() => { setShowLF(!showLF); setLForm({}); }} style={sty.btn(showLF ? "#ef4444" : "#ec4899")}>{showLF ? t.whoop.cancel : t.labs.addLab}</button>
+            </div>
+          </div>
+          <input ref={labFileRef} type="file" accept=".pdf,image/*" onChange={handleLabPdfImport} style={{ display: "none" }} />
+          {labImportMsg && (
+            <div style={{ marginTop: 10, background: labImportMsg.includes("reusit") || labImportMsg.includes("Success") ? "rgba(34,197,94,0.12)" : labImportMsg.includes("analizeaza") || labImportMsg.includes("analyzing") ? "rgba(139,92,246,0.12)" : "rgba(239,68,68,0.12)", color: labImportMsg.includes("reusit") || labImportMsg.includes("Success") ? "#4ade80" : labImportMsg.includes("analizeaza") || labImportMsg.includes("analyzing") ? "#c4b5fd" : "#f87171", padding: "10px 14px", borderRadius: 8, fontSize: 12, display: "flex", alignItems: "center", gap: 8 }}>
+              {labParsing && <span style={{ display: "inline-block", animation: "spin 1s linear infinite", fontSize: 14 }}>⏳</span>}
+              {labImportMsg}
+            </div>
+          )}
+          <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(139,92,246,0.08)", borderRadius: 8, border: "1px solid rgba(139,92,246,0.1)" }}>
+            <div style={{ color: "#a78bfa", fontSize: 10, fontWeight: 600, marginBottom: 3 }}>{lang === "ro" ? "IMPORT AUTOMAT:" : "AUTO IMPORT:"}</div>
+            <div style={{ color: "#94a3b8", fontSize: 10, lineHeight: 1.5 }}>
+              {lang === "ro"
+                ? "Uploadeaza PDF-ul de la laborator (Synevo, MedLife, Regina Maria) sau o foto a rezultatelor. AI-ul extrage automat toate valorile."
+                : "Upload your lab PDF (Synevo, MedLife, Regina Maria) or a photo of results. AI extracts all values automatically."}
+            </div>
+          </div>
         </div>
         {showLF && (
           <div style={sty.card}>
