@@ -1,5 +1,12 @@
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -8,7 +15,7 @@ export default async function handler(req, res) {
 
   if (!apiKey) {
     return res.status(500).json({ 
-      error: 'ANTHROPIC_API_KEY not configured. Add it in Vercel → Settings → Environment Variables.' 
+      error: 'ANTHROPIC_API_KEY not configured. Add it in Vercel Settings > Environment Variables.' 
     });
   }
 
@@ -24,7 +31,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
+        max_tokens: 4096,
         system: system,
         messages: messages
       })
