@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const T = {
   ro: {
     title: "LONGEVITY OS", subtitle: "Protocol Personalizat • Tahsin",
-    tabs: { dashboard: "Dashboard", whoop: "WHOOP", labs: "Analize", biomarkers: "Biomarkeri", protocols: "Protocoale", supplements: "Suplimente", exercise: "Exerciții", nutrition: "Nutriție", sleep: "Somn", screening: "Screening", chat: "AI Coach" },
+    tabs: { dashboard: "Dashboard", tracker: "Tracker", whoop: "WHOOP", labs: "Analize", biomarkers: "Biomarkeri", protocols: "Protocoale", supplements: "Suplimente", exercise: "Exercitii", nutrition: "Nutritie", sleep: "Somn", screening: "Screening", chat: "AI Coach" },
     dash: { chronoAge: "Vârstă Cronologică", bioTarget: "Obiectiv Biologic", biomarkers: "Biomarkeri", born: "Născut 21 Nov 1982", reduction: "Reducere 8 ani", fullMonitor: "Monitorizare completă", dailyRoutine: "RUTINA ZILNICĂ", topPriorities: "TOP 5 PRIORITĂȚI", sources: "SURSE & MENTORI", lastRecovery: "WHOOP Recovery", lastLabs: "Ultima Analiză" },
     whoop: { title: "WHOOP Life Tracker", subtitle: "Introdu datele zilnic din WHOOP app", entries: "înregistrări", addData: "+ Adaugă Date", cancel: "✕ Anulează", date: "Data", save: "💾 Salvează", lastEntry: "Ultima Înregistrare", trends: "📈 Trenduri (14 zile)", insights: "🧠 INSIGHTS", history: "📋 Istoric", days: "zile", noData: "Nicio înregistrare WHOOP", noDataSub: "Apasa [+ Adauga Date] si introdu metricile din WHOOP app.", avg7: "7-day avg" },
     labs: { title: "Analize de Sânge", subtitle: "Introdu rezultatele analizelor de la laborator", addLab: "+ Adaugă Rezultate", noLabs: "Nicio analiză încă", noLabsSub: "Adaugă prima analiză de sânge pentru tracking complet.", labDate: "Data analizei", labName: "Nume laborator", category: "Categorie", all: "Toate", latestResults: "Ultimele Rezultate", labHistory: "Istoric Analize", optimal: "OPTIM", warning: "ATENȚIE", critical: "CRITIC", target: "Target", value: "Valoare", save: "💾 Salvează Analiza", viewAll: "Vezi tot", trend: "Trend" },
@@ -32,7 +32,7 @@ const T = {
   },
   en: {
     title: "LONGEVITY OS", subtitle: "Personalized Protocol • Tahsin",
-    tabs: { dashboard: "Dashboard", whoop: "WHOOP", labs: "Lab Results", biomarkers: "Biomarkers", protocols: "Protocols", supplements: "Supplements", exercise: "Exercise", nutrition: "Nutrition", sleep: "Sleep", screening: "Screening", chat: "AI Coach" },
+    tabs: { dashboard: "Dashboard", tracker: "Tracker", whoop: "WHOOP", labs: "Lab Results", biomarkers: "Biomarkers", protocols: "Protocols", supplements: "Supplements", exercise: "Exercise", nutrition: "Nutrition", sleep: "Sleep", screening: "Screening", chat: "AI Coach" },
     dash: { chronoAge: "Chronological Age", bioTarget: "Biological Target", biomarkers: "Biomarkers", born: "Born Nov 21, 1982", reduction: "8 year reduction", fullMonitor: "Full monitoring", dailyRoutine: "DAILY ROUTINE", topPriorities: "TOP 5 PRIORITIES", sources: "SOURCES & MENTORS", lastRecovery: "WHOOP Recovery", lastLabs: "Last Lab Test" },
     whoop: { title: "WHOOP Life Tracker", subtitle: "Enter daily metrics from WHOOP app", entries: "entries", addData: "+ Add Data", cancel: "✕ Cancel", date: "Date", save: "💾 Save", lastEntry: "Latest Entry", trends: "📈 Trends (14 days)", insights: "🧠 INSIGHTS", history: "📋 History", days: "days", noData: "No WHOOP data yet", noDataSub: "Click '+ Add Data' to enter your WHOOP metrics.", avg7: "7-day avg" },
     labs: { title: "Blood Tests", subtitle: "Enter lab results for complete tracking", addLab: "+ Add Results", noLabs: "No lab results yet", noLabsSub: "Add your first blood test for complete tracking.", labDate: "Test date", labName: "Lab name", category: "Category", all: "All", latestResults: "Latest Results", labHistory: "Lab History", optimal: "OPTIMAL", warning: "WARNING", critical: "CRITICAL", target: "Target", value: "Value", save: "💾 Save Results", viewAll: "View all", trend: "Trend" },
@@ -280,15 +280,85 @@ export default function App() {
   const [labCat, setLabCat] = useState("all");
   const [expProto, setExpProto] = useState(null);
   const [expSupp, setExpSupp] = useState(null);
-  const [chatMsgs, setChatMsgs] = useState([]);
+  const [chatMsgs, setChatMsgs] = useState(() => {
+    try { const saved = localStorage.getItem("chat-v4"); return saved ? JSON.parse(saved) : []; } catch { return []; }
+  });
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [trackerData, setTrackerData] = useState(() => {
+    try { const s = localStorage.getItem("tracker-v4"); return s ? JSON.parse(s) : {}; } catch { return {}; }
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+  const todayTracker = trackerData[today] || { weight: "", water: 0, mood: 0, energy: 0, fasting: false, fastStart: null, checklist: {} };
+  const CHECKLIST_ITEMS = [
+    { key: "supplements_am", label: { ro: "Suplimente dimineata", en: "Morning supplements" }, icon: "💊" },
+    { key: "supplements_pm", label: { ro: "Suplimente seara", en: "Evening supplements" }, icon: "💊" },
+    { key: "cold_shower", label: { ro: "Dus rece", en: "Cold shower" }, icon: "🥶" },
+    { key: "sunlight", label: { ro: "Lumina solara 10 min", en: "Sunlight 10 min" }, icon: "☀️" },
+    { key: "workout", label: { ro: "Antrenament", en: "Workout" }, icon: "🏋️" },
+    { key: "sauna", label: { ro: "Sauna", en: "Sauna" }, icon: "🧖" },
+    { key: "meditation", label: { ro: "Meditatie", en: "Meditation" }, icon: "🧘" },
+    { key: "no_alcohol", label: { ro: "Zero alcool", en: "Zero alcohol" }, icon: "🚫" },
+    { key: "sleep_routine", label: { ro: "Rutina somn (22:30)", en: "Sleep routine (22:30)" }, icon: "🌙" },
+    { key: "blue_block", label: { ro: "Blue-blocking glasses", en: "Blue-blocking glasses" }, icon: "👓" },
+    { key: "protein_target", label: { ro: "Proteine 160g+", en: "Protein 160g+" }, icon: "🥩" },
+    { key: "no_processed", label: { ro: "Zero procesate", en: "Zero processed" }, icon: "🥗" },
+  ];
+
+  const updateTracker = (field, value) => {
+    const updated = { ...trackerData, [today]: { ...todayTracker, [field]: value } };
+    setTrackerData(updated);
+    try { localStorage.setItem("tracker-v4", JSON.stringify(updated)); } catch {}
+  };
+
+  const toggleCheck = (key) => {
+    const checks = { ...todayTracker.checklist, [key]: !todayTracker.checklist[key] };
+    updateTracker("checklist", checks);
+  };
+
+  const getStreak = () => {
+    let streak = 0; let d = new Date();
+    for (let i = 0; i < 365; i++) {
+      const ds = d.toISOString().split("T")[0];
+      const day = trackerData[ds];
+      if (day && day.checklist && Object.values(day.checklist).filter(Boolean).length >= 5) { streak++; d.setDate(d.getDate() - 1); }
+      else if (i === 0) { d.setDate(d.getDate() - 1); }
+      else break;
+    }
+    return streak;
+  };
+
+  const getWeightTrend = () => {
+    return Object.entries(trackerData).filter(([_, v]) => v.weight).map(([d, v]) => ({ date: d, v: parseFloat(v.weight) })).sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+  };
+
+  const getLongevityScore = () => {
+    let score = 50; let factors = 0;
+    if (latestW) {
+      if (latestW.recovery) { const r = parseFloat(latestW.recovery); score += r >= 67 ? 10 : r >= 34 ? 5 : -5; factors++; }
+      if (latestW.hrv) { const h = parseFloat(latestW.hrv); score += h >= 50 ? 10 : h >= 30 ? 5 : -5; factors++; }
+      if (latestW.sleepScore) { const s = parseFloat(latestW.sleepScore); score += s >= 85 ? 10 : s >= 70 ? 5 : -5; factors++; }
+    }
+    const criticalBMs = ["glucose", "hba1c", "hscrp", "apob", "ldl", "testTotal", "vitd"];
+    criticalBMs.forEach(key => {
+      const lv = getLabValue(key); const bm = BIOMARKERS.find(b => b.key === key);
+      if (lv && bm) { const z = getZone(bm, lv.v); score += z === "optimal" ? 5 : z === "warning" ? 0 : -5; factors++; }
+    });
+    const checkCount = todayTracker.checklist ? Object.values(todayTracker.checklist).filter(Boolean).length : 0;
+    score += Math.round(checkCount / CHECKLIST_ITEMS.length * 10);
+    return Math.max(0, Math.min(100, score));
+  };
   const chatRef = useRef(null);
   const t = T[lang];
 
   useEffect(() => { loadAll(); }, []);
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [chatMsgs]);
+  useEffect(() => { try { localStorage.setItem("chat-v4", JSON.stringify(chatMsgs.slice(-50))); } catch {} }, [chatMsgs]);
+  const clearChat = () => { setChatMsgs([]); try { localStorage.removeItem("chat-v4"); } catch {} };
+
+  const [infoPopup, setInfoPopup] = useState(null);
 
   const loadAll = async () => {
     try { const r = localStorage.getItem("whoop-v4"); if (r) setWhoopData(JSON.parse(r)); } catch {}
@@ -586,6 +656,108 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     input: { background: "#1e293b", color: "#e2e8f0", border: "1px solid #334155", borderRadius: 8, padding: "6px 10px", fontSize: 13, width: "100%", fontFamily: "'JetBrains Mono', monospace" },
     btn: (c) => ({ background: `${c}22`, color: c, border: `1px solid ${c}44`, borderRadius: 10, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600 }),
     btnPrimary: { background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", cursor: "pointer", fontSize: 14, fontWeight: 600 },
+    infoBtn: { background: "rgba(99,102,241,0.2)", color: "#818cf8", border: "none", borderRadius: "50%", width: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 10, fontWeight: 700, flexShrink: 0 },
+  };
+
+  const BM_INFO = {
+    glucose: { ro: { w: "Nivelul zaharului din sange dupa 8h fara mancare.", h: "Rezistenta la insulina, prediabet, diabet tip 2. Risc cardiovascular crescut.", l: "Hipoglicemie: ameteala, tremur, confuzie.", a: "Reduce carbohidratii rafinati. Miscare dupa mese. Metformina/Acarboza." }, en: { w: "Blood sugar level after 8h fasting.", h: "Insulin resistance, prediabetes, type 2 diabetes. Increased cardiovascular risk.", l: "Hypoglycemia: dizziness, tremor, confusion.", a: "Reduce refined carbs. Walk after meals. Metformin/Acarbose." } },
+    hba1c: { ro: { w: "Media glucozei din ultimele 3 luni. Cel mai bun marker de control glicemic.", h: "Diabet sau prediabet. Risc de neuropatie, retinopatie, boli de rinichi.", l: "Rar problematic. Posibil anemie.", a: "Dieta low-glycemic. Post intermitent. Berberine sau Metformina." }, en: { w: "3-month glucose average. Best glycemic control marker.", h: "Diabetes or prediabetes. Risk of neuropathy, retinopathy, kidney disease.", l: "Rarely problematic. Possible anemia.", a: "Low-glycemic diet. Intermittent fasting. Berberine or Metformin." } },
+    insulin: { ro: { w: "Cat de multa insulina produce pancreasul. Marker precoce - se schimba cu ANII inainte de diabet.", h: "Rezistenta la insulina. Inflamatie cronica. Risc cancer. Imbatranire accelerata.", l: "Normal daca glucoza e normala.", a: "Post intermitent 16:8. Exercitii de forta. Reduce zaharul." }, en: { w: "How much insulin the pancreas produces. Early marker - changes YEARS before diabetes.", h: "Insulin resistance. Chronic inflammation. Cancer risk. Accelerated aging.", l: "Normal if glucose is normal.", a: "Intermittent fasting 16:8. Strength training. Reduce sugar." } },
+    homair: { ro: { w: "Index calculat din glucoza si insulina. Cel mai precis marker de rezistenta la insulina.", h: "Rezistenta la insulina confirmata. Risc de diabet, boli cardiace, cancer.", l: "Sensibilitate excelenta la insulina.", a: "Exercitii aerobice + forta. Reducere greutate. Metformina." }, en: { w: "Index from glucose and insulin. Most precise insulin resistance marker.", h: "Confirmed insulin resistance. Risk of diabetes, heart disease, cancer.", l: "Excellent insulin sensitivity.", a: "Aerobic + strength exercise. Weight loss. Metformin." } },
+    hscrp: { ro: { w: "Masoara inflamatia din tot corpul. Cel mai important marker de inflamatie cronica.", h: "Inflamatie cronica = accelereaza TOATE bolile: inima, cancer, Alzheimer, imbatranire.", l: "Excelent! Inflamatie minima.", a: "Omega-3 (4g/zi). Curcumina. Elimina zahar si alimente procesate. Somn 7-8h." }, en: { w: "Measures whole-body inflammation. Most important chronic inflammation marker.", h: "Chronic inflammation accelerates ALL diseases: heart, cancer, Alzheimer, aging.", l: "Excellent! Minimal inflammation.", a: "Omega-3 (4g/day). Curcumin. Eliminate sugar and processed food. Sleep 7-8h." } },
+    homocysteine: { ro: { w: "Aminoacid legat de sanatatea inimii si creierului. Creste fara B12 si folat.", h: "Risc crescut de infarct, AVC, dementa Alzheimer, depresie.", l: "Normal.", a: "Vitamina B12 metilcobalamina. Folat (5-MTHF). Vitamina B6." }, en: { w: "Amino acid linked to heart and brain health. Rises without B12 and folate.", h: "Increased risk of heart attack, stroke, Alzheimer dementia, depression.", l: "Normal.", a: "Vitamin B12 methylcobalamin. Folate (5-MTHF). Vitamin B6." } },
+    apob: { ro: { w: "Numarul de particule aterogene din sange. MAI BUN decat LDL pentru predictia riscului cardiac.", h: "Ateroscleroza progresiva. Risc major de infarct si AVC. Placile se acumuleaza in artere.", l: "Protectie cardiovasculara excelenta.", a: "Statine sau Ezetimib (discuta cu medicul). Dieta, exercitii. PCSK9 inhibitori." }, en: { w: "Number of atherogenic particles in blood. BETTER than LDL for cardiac risk prediction.", h: "Progressive atherosclerosis. Major risk of heart attack and stroke.", l: "Excellent cardiovascular protection.", a: "Statins or Ezetimibe (discuss with doctor). Diet, exercise. PCSK9 inhibitors." } },
+    ldl: { ro: { w: "Colesterolul 'rau'. Cauza directa a aterosclerozei - se depune in peretii arterelor.", h: "Placi aterosclerotice. Risc de infarct si AVC. Artere inguste.", l: "Bine pentru longevitate.", a: "Statine. Dieta saraca in grasimi saturate. Exercitii aerobice." }, en: { w: "The 'bad' cholesterol. Direct cause of atherosclerosis - deposits in artery walls.", h: "Atherosclerotic plaques. Risk of heart attack and stroke. Narrowed arteries.", l: "Good for longevity.", a: "Statins. Low saturated fat diet. Aerobic exercise." } },
+    hdl: { ro: { w: "Colesterolul 'bun'. Curata colesterolul din artere si il duce la ficat.", h: "Foarte bine - protectie cardiovasculara.", l: "Risc cardiovascular crescut. Lipsa protectiei arteriale.", a: "Exercitii aerobice. EVOO (ulei masline). Omega-3. Evita fumatul." }, en: { w: "The 'good' cholesterol. Cleans cholesterol from arteries and returns it to liver.", h: "Very good - cardiovascular protection.", l: "Increased cardiovascular risk. Lack of arterial protection.", a: "Aerobic exercise. EVOO (olive oil). Omega-3. Avoid smoking." } },
+    trig: { ro: { w: "Grasimi din sange. Indicator de rezistenta la insulina si risc cardiac.", h: "Sindrom metabolic. Risc pancreatita (peste 500). Risc cardiovascular.", l: "Excelent.", a: "Reduce carbohidratii. Omega-3 (4g). Post intermitent. Elimina alcoolul." }, en: { w: "Blood fats. Indicator of insulin resistance and cardiac risk.", h: "Metabolic syndrome. Pancreatitis risk (above 500). Cardiovascular risk.", l: "Excellent.", a: "Reduce carbs. Omega-3 (4g). Intermittent fasting. Eliminate alcohol." } },
+    testTotal: { ro: { w: "Hormonul masculin principal. Esential pentru masa musculara, energie, libido, cognitie.", h: "Rar problematic natural. Posibil tumor.", l: "Oboseala cronica, pierdere masa musculara, depresie, libido scazut, grasime abdominala.", a: "Somn 7-8h. Antrenament forta. Zinc. Ashwagandha. TRT daca e sub 300 (cu medic)." }, en: { w: "Main male hormone. Essential for muscle mass, energy, libido, cognition.", h: "Rarely problematic naturally. Possible tumor.", l: "Chronic fatigue, muscle loss, depression, low libido, abdominal fat.", a: "Sleep 7-8h. Strength training. Zinc. Ashwagandha. TRT if under 300 (with doctor)." } },
+    testFree: { ro: { w: "Testosteronul activ, nelegat de proteine. Cel care chiar functioneaza in corp.", h: "Rar problematic.", l: "Aceleasi simptome ca testosteron total scazut, chiar daca totalul pare normal.", a: "Reduce SHBG: zinc, magneziu. Scade grasimea corporala." }, en: { w: "Active testosterone, unbound to proteins. The one that actually works in the body.", h: "Rarely problematic.", l: "Same symptoms as low total T, even if total appears normal.", a: "Reduce SHBG: zinc, magnesium. Lower body fat." } },
+    tsh: { ro: { w: "Controlorul tiroidei. Arata cat de tare trebuie sa lucreze tiroida.", h: "Hipotiroidism: oboseala, ingrasare, frig, piele uscata, depresie, metabolism lent.", l: "Hipertiroidism: anxietate, pierdere greutate, tremor, palpitati.", a: "Seleniu. Iod. Zinc. Consult endocrinolog daca e in afara rangului." }, en: { w: "Thyroid controller. Shows how hard the thyroid needs to work.", h: "Hypothyroidism: fatigue, weight gain, cold, dry skin, depression, slow metabolism.", l: "Hyperthyroidism: anxiety, weight loss, tremor, palpitations.", a: "Selenium. Iodine. Zinc. See endocrinologist if out of range." } },
+    vitd: { ro: { w: "Nu e doar vitamina - e un HORMON. Controleaza peste 200 de gene. Majoritatea sunt deficitari.", h: "Toxicitate rara (peste 150). Calcificare.", l: "Imunitate slaba. Risc cancer crescut. Depresie. Osteoporoza. Inflamatie cronica.", a: "Suplimenteaza D3 5000-10000 IU/zi + K2. Expunere solara. Testeaza la 6 luni." }, en: { w: "Not just a vitamin - it's a HORMONE. Controls 200+ genes. Most people are deficient.", h: "Rare toxicity (above 150). Calcification.", l: "Weak immunity. Increased cancer risk. Depression. Osteoporosis. Chronic inflammation.", a: "Supplement D3 5000-10000 IU/day + K2. Sun exposure. Test every 6 months." } },
+    vitb12: { ro: { w: "Esentiala pentru nervi, creier, ADN, si producerea de sange. CRITICA daca iei Metformina.", h: "Rar problematic.", l: "Neuropatie (amorteala, furnicaturi), anemie, oboseala, probleme cognitive, depresie.", a: "Metilcobalamina sublinguala 1000-5000mcg/zi. OBLIGATORIU cu Metformina." }, en: { w: "Essential for nerves, brain, DNA, and blood production. CRITICAL if taking Metformin.", h: "Rarely problematic.", l: "Neuropathy (numbness, tingling), anemia, fatigue, cognitive issues, depression.", a: "Sublingual methylcobalamin 1000-5000mcg/day. MANDATORY with Metformin." } },
+    ferritin: { ro: { w: "Depozitul de fier din corp. Prea mult sau prea putin - ambele sunt rele.", h: "Stres oxidativ. Inflamatie. Risc organ damage. Hemochromatoza.", l: "Anemie: oboseala extrema, paloare, caderea parului, unghii fragile.", a: "Daca e prea mare: doneaza sange. Daca e prea mic: fier bisglicinat + vitamina C." }, en: { w: "Iron storage in the body. Too much or too little - both are bad.", h: "Oxidative stress. Inflammation. Organ damage risk. Hemochromatosis.", l: "Anemia: extreme fatigue, pallor, hair loss, brittle nails.", a: "If too high: donate blood. If too low: iron bisglycinate + vitamin C." } },
+    egfr: { ro: { w: "Cat de bine filtreaza rinichii sangele. Scade cu varsta - monitorizare ESENTIALA cu suplimente.", h: "Bine - rinichi sanatosi.", l: "Boala renala. Sub 60 = boala cronica. Sub 30 = severa. Necesita nefrolog.", a: "Hidratare 2-3L/zi. Reduce sarea. Evita excesul de proteine daca e scazut." }, en: { w: "How well kidneys filter blood. Decreases with age - ESSENTIAL monitoring with supplements.", h: "Good - healthy kidneys.", l: "Kidney disease. Below 60 = chronic disease. Below 30 = severe. Needs nephrologist.", a: "Hydration 2-3L/day. Reduce salt. Avoid excess protein if low." } },
+    alt: { ro: { w: "Enzima din ficat. Cel mai sensibil marker de leziune hepatica.", h: "Leziune hepatica: steatoza (ficat gras), hepatita, alcool, medicamente, suplimente.", l: "Normal - ficat sanatos.", a: "Elimina alcoolul. Reduce zahar/procesate. Verifica medicamente hepatotoxice." }, en: { w: "Liver enzyme. Most sensitive marker of liver damage.", h: "Liver damage: fatty liver, hepatitis, alcohol, medications, supplements.", l: "Normal - healthy liver.", a: "Eliminate alcohol. Reduce sugar/processed food. Check hepatotoxic meds." } },
+    psa: { ro: { w: "Marker pentru prostata. Screening cancer prostata - OBLIGATORIU dupa 40 ani.", h: "Posibil cancer de prostata, hiperplazie benigna, sau infectie. Necesita investigatii suplimentare.", l: "Normal.", a: "Consult urolog daca e peste 4. RMN prostata multiparametric." }, en: { w: "Prostate marker. Prostate cancer screening - MANDATORY after 40.", h: "Possible prostate cancer, benign hyperplasia, or infection. Needs further investigation.", l: "Normal.", a: "See urologist if above 4. Multiparametric prostate MRI." } },
+    wbc: { ro: { w: "Celulele albe - armata imunitara a corpului.", h: "Infectie, inflamatie, stres, sau (rar) leucemie.", l: "Imunitate slaba. Risc crescut de infectii. Posibil efect medicamentos.", a: "Daca persistent anormal, consult hematolog." }, en: { w: "White cells - the body's immune army.", h: "Infection, inflammation, stress, or (rarely) leukemia.", l: "Weak immunity. Increased infection risk. Possible drug effect.", a: "If persistently abnormal, see hematologist." } },
+    hgb: { ro: { w: "Proteina care transporta oxigenul in sange. Esentiala pentru energie.", h: "Policitemie. Deshidratare. Risc de cheaguri.", l: "Anemie: oboseala severa, paloare, dispnee, tahicardie.", a: "Daca e scazut: fier, B12, folat. Daca e crescut: hidratare, consult." }, en: { w: "Protein that carries oxygen in blood. Essential for energy.", h: "Polycythemia. Dehydration. Clot risk.", l: "Anemia: severe fatigue, pallor, shortness of breath, tachycardia.", a: "If low: iron, B12, folate. If high: hydration, consult doctor." } },
+  };
+
+  const getInfoForBM = (bm) => {
+    const detail = BM_INFO[bm.key];
+    if (detail) return detail[lang];
+    return {
+      w: bm.imp[lang],
+      h: lang === "ro" ? "Valoare in afara rangului optim. Consulta un medic." : "Value outside optimal range. Consult a doctor.",
+      l: lang === "ro" ? "Valoare sub rangul optim." : "Value below optimal range.",
+      a: lang === "ro" ? "Discuta cu medicul tau. Verifica la urmatoarea analiza." : "Discuss with your doctor. Recheck at next test."
+    };
+  };
+
+  const renderInfoPopup = () => {
+    if (!infoPopup) return null;
+    const bm = BIOMARKERS.find(b => b.key === infoPopup);
+    if (!bm) return null;
+    const info = getInfoForBM(bm);
+    const lv = getLabValue(bm.key);
+    const z = lv ? getZone(bm, lv.v) : null;
+    const cc = CC[bm.cat] || CC.Metabolic;
+    return (
+      <div onClick={() => setInfoPopup(null)} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: "#0f172a", borderRadius: 16, padding: 24, maxWidth: 480, width: "100%", border: `1px solid ${cc.border}44`, maxHeight: "80vh", overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div>
+              <h3 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>{bm.name[lang]}</h3>
+              <div style={{ color: cc.text, fontSize: 12, marginTop: 4 }}>{lang === "ro" ? bm.cat : CAT_EN[bm.cat]} • {bm.target} {bm.unit}</div>
+            </div>
+            <button onClick={() => setInfoPopup(null)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20 }}>✕</button>
+          </div>
+          {lv && (
+            <div style={{ background: `${z ? zoneColor[z] : "#475569"}15`, borderRadius: 10, padding: 12, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ color: "#94a3b8", fontSize: 12 }}>{lang === "ro" ? "Ultima valoare" : "Last value"}</span>
+              <div><span style={{ color: z ? zoneColor[z] : "#475569", fontSize: 22, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{lv.v}</span><span style={{ color: "#64748b", fontSize: 12, marginLeft: 6 }}>{bm.unit}</span>
+              {z && <span style={{ background: `${zoneColor[z]}22`, color: zoneColor[z], padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, marginLeft: 8 }}>{t.zones[z]}</span>}</div>
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ background: "#1e293b", borderRadius: 10, padding: 12 }}>
+              <div style={{ color: "#60a5fa", fontSize: 10, fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{lang === "ro" ? "CE MASOARA" : "WHAT IT MEASURES"}</div>
+              <div style={{ color: "#cbd5e1", fontSize: 13, lineHeight: 1.5 }}>{info.w}</div>
+            </div>
+            <div style={{ background: "rgba(239,68,68,0.08)", borderRadius: 10, padding: 12, borderLeft: "3px solid #ef4444" }}>
+              <div style={{ color: "#f87171", fontSize: 10, fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{lang === "ro" ? "RISC CAND E PREA MARE" : "RISK WHEN TOO HIGH"}</div>
+              <div style={{ color: "#fca5a5", fontSize: 13, lineHeight: 1.5 }}>{info.h}</div>
+            </div>
+            <div style={{ background: "rgba(234,179,8,0.08)", borderRadius: 10, padding: 12, borderLeft: "3px solid #eab308" }}>
+              <div style={{ color: "#fbbf24", fontSize: 10, fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{lang === "ro" ? "RISC CAND E PREA MIC" : "RISK WHEN TOO LOW"}</div>
+              <div style={{ color: "#fde68a", fontSize: 13, lineHeight: 1.5 }}>{info.l}</div>
+            </div>
+            <div style={{ background: "rgba(34,197,94,0.08)", borderRadius: 10, padding: 12, borderLeft: "3px solid #22c55e" }}>
+              <div style={{ color: "#4ade80", fontSize: 10, fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{lang === "ro" ? "CE SA FACI" : "WHAT TO DO"}</div>
+              <div style={{ color: "#bbf7d0", fontSize: 13, lineHeight: 1.5 }}>{info.a}</div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <div style={{ flex: 1, background: "#22c55e15", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+                <div style={{ color: "#475569", fontSize: 9 }}>OPTIM</div>
+                <div style={{ color: "#4ade80", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>{bm.optimal[0]}-{bm.optimal[1]}</div>
+              </div>
+              <div style={{ flex: 1, background: "#f59e0b15", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+                <div style={{ color: "#475569", fontSize: 9 }}>{lang === "ro" ? "ATENTIE" : "WARNING"}</div>
+                <div style={{ color: "#fbbf24", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>{bm.warning[0]}-{bm.warning[1]}</div>
+              </div>
+              <div style={{ flex: 1, background: "#ef444415", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+                <div style={{ color: "#475569", fontSize: 9 }}>CRITIC</div>
+                <div style={{ color: "#f87171", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>{bm.bad[0]}-{bm.bad[1]}</div>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => { setInfoPopup(null); setTab("chat"); setChatInput(lang === "ro" ? `Explica-mi detaliat ce inseamna ${bm.name[lang]} si cum pot sa-l optimizez.` : `Explain in detail what ${bm.name[lang]} means and how I can optimize it.`); }}
+            style={{ ...sty.btnPrimary, width: "100%", marginTop: 14, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", textAlign: "center" }}>
+            {lang === "ro" ? "Intreaba AI Coach pentru mai multe detalii" : "Ask AI Coach for more details"}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const renderDashboard = () => (
@@ -594,7 +766,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
         <h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 20, fontFamily: "'Playfair Display', serif" }}>{t.title}</h2>
         <p style={{ color: "#94a3b8", margin: "6px 0 0", fontSize: 12 }}>{t.subtitle} • v4.0</p>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${latestW ? 4 : 3}, 1fr)`, gap: 14, marginTop: 18 }}>
-          {[{ l: t.dash.chronoAge, v: "43", s: t.dash.born }, { l: t.dash.bioTarget, v: "35", s: t.dash.reduction }, { l: t.dash.biomarkers, v: BIOMARKERS.length, s: t.dash.fullMonitor },
+          {[{ l: t.dash.chronoAge, v: "43", s: t.dash.born }, { l: t.dash.bioTarget, v: "35", s: t.dash.reduction }, { l: lang === "ro" ? "Scor Longevitate" : "Longevity Score", v: getLongevityScore(), s: lang === "ro" ? "din 100" : "out of 100" },
             ...(latestW ? [{ l: t.dash.lastRecovery, v: latestW.recovery ? `${latestW.recovery}%` : "—", s: `HRV: ${latestW.hrv || "—"} ms` }] : [])
           ].map((c, i) => (
             <div key={i} style={{ background: "rgba(15,23,42,0.6)", borderRadius: 12, padding: 14, border: "1px solid rgba(100,116,139,0.15)", textAlign: "center" }}>
@@ -774,7 +946,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                   {BIOMARKERS.filter(b => b.cat === cat).map(bm => (
                     <div key={bm.key} style={{ background: CC[cat].bg, borderRadius: 8, padding: 8, border: `1px solid ${CC[cat].border}15` }}>
-                      <div style={{ color: "#94a3b8", fontSize: 9, marginBottom: 3 }}>{bm.name[lang]} <span style={{ color: "#475569" }}>({bm.target} {bm.unit})</span></div>
+                      <div style={{ color: "#94a3b8", fontSize: 9, marginBottom: 3, display: "flex", alignItems: "center", gap: 4 }}>{bm.name[lang]} <span style={{ color: "#475569" }}>({bm.target} {bm.unit})</span> <button onClick={(e) => { e.stopPropagation(); setInfoPopup(bm.key); }} style={sty.infoBtn}>i</button></div>
                       <input type="number" step="any" value={lForm[bm.key] || ""} onChange={e => setLForm({ ...lForm, [bm.key]: e.target.value })} style={{ ...sty.input, fontSize: 13, fontWeight: 600 }} />
                     </div>
                   ))}
@@ -802,7 +974,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
                     {trend.length > 1 && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, opacity: 0.12 }}><MiniChart data={trend} color={c} h={30} /></div>}
                     <div style={{ position: "relative" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ color: "#94a3b8", fontSize: 9 }}>{bm.name[lang]}</span>
+                        <span style={{ color: "#94a3b8", fontSize: 9, display: "flex", alignItems: "center", gap: 3 }}>{bm.name[lang]} <button onClick={() => setInfoPopup(bm.key)} style={{ ...sty.infoBtn, width: 14, height: 14, fontSize: 8 }}>i</button></span>
                         {z && <span style={{ background: `${c}22`, color: c, padding: "1px 4px", borderRadius: 4, fontSize: 7, fontWeight: 700 }}>{t.zones[z]}</span>}
                       </div>
                       <div style={{ color: lv ? c : "#334155", fontSize: 20, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: "2px 0" }}>{lv ? lv.v : "—"}</div>
@@ -849,7 +1021,8 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
           {BIOMARKERS.filter(b => b.cat === cat).map((b, i) => {
             const lv = getLabValue(b.key); const z = lv ? getZone(b, lv.v) : null;
             return (
-              <div key={i} style={{ background: CC[cat].bg, borderRadius: 8, padding: "8px 12px", marginBottom: 3, border: `1px solid ${CC[cat].border}22`, display: "grid", gridTemplateColumns: "1.3fr 0.8fr 0.5fr 0.5fr 1.5fr", gap: 6, alignItems: "center" }}>
+              <div key={i} style={{ background: CC[cat].bg, borderRadius: 8, padding: "8px 12px", marginBottom: 3, border: `1px solid ${CC[cat].border}22`, display: "grid", gridTemplateColumns: "auto 1.3fr 0.8fr 0.5fr 0.5fr 1.5fr", gap: 6, alignItems: "center" }}>
+                <button onClick={() => setInfoPopup(b.key)} style={sty.infoBtn}>i</button>
                 <div style={{ color: "#e2e8f0", fontSize: 11, fontWeight: 600 }}>{b.name[lang]}</div>
                 <div><div style={{ color: "#475569", fontSize: 8 }}>{t.bio.targetLabel}</div><div style={{ color: CC[cat].text, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{b.target} {b.unit}</div></div>
                 <div>{lv ? <><div style={{ color: "#475569", fontSize: 8 }}>{t.labs.value}</div><div style={{ color: z ? zoneColor[z] : "#475569", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{lv.v}</div></> : <div style={{ color: "#334155", fontSize: 10 }}>—</div>}</div>
@@ -985,11 +1158,189 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     </div>
   );
 
+  const renderTracker = () => {
+    const streak = getStreak();
+    const longevityScore = getLongevityScore();
+    const weightTrend = getWeightTrend();
+    const checkCount = todayTracker.checklist ? Object.values(todayTracker.checklist).filter(Boolean).length : 0;
+    const checkPct = Math.round(checkCount / CHECKLIST_ITEMS.length * 100);
+    const nextScreening = SCREENINGS.filter(s => s.due === "2026").length;
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Longevity Score + Streak + Next Screening */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div style={{ ...sty.card, textAlign: "center", border: "1px solid rgba(139,92,246,0.2)", background: "linear-gradient(135deg, #0a1628, #1a0a28)" }}>
+            <div style={{ color: "#64748b", fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>{lang === "ro" ? "Scor Longevitate" : "Longevity Score"}</div>
+            <div style={{ color: longevityScore >= 70 ? "#4ade80" : longevityScore >= 50 ? "#fbbf24" : "#f87171", fontSize: 36, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: "4px 0" }}>{longevityScore}</div>
+            <div style={{ color: "#475569", fontSize: 10 }}>{lang === "ro" ? "din 100" : "out of 100"}</div>
+            <div style={{ background: "#1e293b", borderRadius: 6, height: 6, marginTop: 8, overflow: "hidden" }}>
+              <div style={{ background: longevityScore >= 70 ? "#22c55e" : longevityScore >= 50 ? "#eab308" : "#ef4444", height: "100%", width: `${longevityScore}%`, borderRadius: 6, transition: "width 0.5s" }} />
+            </div>
+          </div>
+          <div style={{ ...sty.card, textAlign: "center", border: "1px solid rgba(249,115,22,0.2)" }}>
+            <div style={{ color: "#64748b", fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>Streak</div>
+            <div style={{ color: "#fb923c", fontSize: 36, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: "4px 0" }}>{streak}</div>
+            <div style={{ color: "#475569", fontSize: 10 }}>{lang === "ro" ? "zile consecutive" : "consecutive days"}</div>
+            <div style={{ color: "#f97316", fontSize: 18, marginTop: 4 }}>{streak >= 30 ? "🏆" : streak >= 7 ? "🔥" : streak >= 3 ? "⚡" : "💪"}</div>
+          </div>
+          <div style={{ ...sty.card, textAlign: "center", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <div style={{ color: "#64748b", fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>{lang === "ro" ? "Screening-uri Due" : "Screenings Due"}</div>
+            <div style={{ color: nextScreening > 0 ? "#f87171" : "#4ade80", fontSize: 36, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: "4px 0" }}>{nextScreening}</div>
+            <div style={{ color: "#475569", fontSize: 10 }}>{lang === "ro" ? "programeaza ASAP" : "schedule ASAP"}</div>
+          </div>
+        </div>
+
+        {/* Weight Tracker */}
+        <div style={{ ...sty.card, border: "1px solid rgba(6,182,212,0.15)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h3 style={{ color: "#22d3ee", margin: 0, fontSize: 14 }}>⚖️ {lang === "ro" ? "Greutate" : "Weight"}</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input type="number" step="0.1" value={todayTracker.weight} placeholder="kg"
+                onChange={e => updateTracker("weight", e.target.value)}
+                style={{ ...sty.input, width: 80, textAlign: "center", fontSize: 16, fontWeight: 700 }} />
+              <span style={{ color: "#475569", fontSize: 12 }}>kg</span>
+              <span style={{ color: "#64748b", fontSize: 10 }}>{lang === "ro" ? "Target: 84 kg" : "Target: 84 kg"}</span>
+            </div>
+          </div>
+          {weightTrend.length > 1 && (
+            <div>
+              <MiniChart data={weightTrend} color="#22d3ee" h={60} />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                <span style={{ color: "#334155", fontSize: 9 }}>{weightTrend[0]?.date}</span>
+                <span style={{ color: "#22d3ee", fontSize: 10, fontWeight: 600 }}>{weightTrend[weightTrend.length - 1]?.v} kg</span>
+                <span style={{ color: "#334155", fontSize: 9 }}>{weightTrend[weightTrend.length - 1]?.date}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Water + Mood + Energy */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div style={{ ...sty.card, border: "1px solid rgba(59,130,246,0.15)" }}>
+            <h3 style={{ color: "#60a5fa", margin: "0 0 10px", fontSize: 13 }}>💧 {lang === "ro" ? "Apa (pahare)" : "Water (glasses)"}</h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <button onClick={() => updateTracker("water", Math.max(0, todayTracker.water - 1))} style={{ ...sty.btn("#ef4444"), padding: "4px 12px", fontSize: 16 }}>-</button>
+              <span style={{ color: todayTracker.water >= 8 ? "#4ade80" : "#60a5fa", fontSize: 28, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{todayTracker.water}</span>
+              <button onClick={() => updateTracker("water", todayTracker.water + 1)} style={{ ...sty.btn("#22c55e"), padding: "4px 12px", fontSize: 16 }}>+</button>
+            </div>
+            <div style={{ color: "#475569", fontSize: 10, textAlign: "center", marginTop: 4 }}>{lang === "ro" ? "Target: 8-10" : "Target: 8-10"} {todayTracker.water >= 8 ? "✅" : ""}</div>
+          </div>
+          <div style={{ ...sty.card, border: "1px solid rgba(234,179,8,0.15)" }}>
+            <h3 style={{ color: "#fbbf24", margin: "0 0 10px", fontSize: 13 }}>😊 Mood</h3>
+            <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => updateTracker("mood", n)} style={{ background: todayTracker.mood === n ? "#fbbf2433" : "transparent", border: todayTracker.mood === n ? "2px solid #fbbf24" : "1px solid #334155", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 16 }}>
+                  {["😫","😕","😐","🙂","😄"][n-1]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ ...sty.card, border: "1px solid rgba(34,197,94,0.15)" }}>
+            <h3 style={{ color: "#4ade80", margin: "0 0 10px", fontSize: 13 }}>⚡ {lang === "ro" ? "Energie" : "Energy"}</h3>
+            <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => updateTracker("energy", n)} style={{ background: todayTracker.energy === n ? "#4ade8033" : "transparent", border: todayTracker.energy === n ? "2px solid #4ade80" : "1px solid #334155", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 14, color: todayTracker.energy >= n ? "#4ade80" : "#334155" }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Fasting Timer */}
+        <div style={{ ...sty.card, border: "1px solid rgba(168,85,247,0.15)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ color: "#c4b5fd", margin: 0, fontSize: 14 }}>⏱️ {lang === "ro" ? "Post Intermitent" : "Intermittent Fasting"}</h3>
+            <div style={{ display: "flex", gap: 8 }}>
+              {!todayTracker.fastStart ? (
+                <button onClick={() => updateTracker("fastStart", Date.now())} style={sty.btn("#8b5cf6")}>{lang === "ro" ? "Incepe Postul" : "Start Fast"}</button>
+              ) : (
+                <>
+                  <span style={{ color: "#c4b5fd", fontSize: 20, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {(() => { const h = Math.floor((Date.now() - todayTracker.fastStart) / 3600000); const m = Math.floor(((Date.now() - todayTracker.fastStart) % 3600000) / 60000); return `${h}h ${m}m`; })()}
+                  </span>
+                  <button onClick={() => updateTracker("fastStart", null)} style={sty.btn("#ef4444")}>{lang === "ro" ? "Stop" : "Stop"}</button>
+                </>
+              )}
+            </div>
+          </div>
+          {todayTracker.fastStart && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ background: "#1e293b", borderRadius: 6, height: 8, overflow: "hidden" }}>
+                <div style={{ background: "linear-gradient(90deg, #8b5cf6, #6366f1)", height: "100%", width: `${Math.min(100, ((Date.now() - todayTracker.fastStart) / 3600000) / 16 * 100)}%`, borderRadius: 6, transition: "width 1s" }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                <span style={{ color: "#475569", fontSize: 9 }}>0h</span>
+                <span style={{ color: "#8b5cf6", fontSize: 9 }}>16h {lang === "ro" ? "(target)" : "(target)"}</span>
+                <span style={{ color: "#475569", fontSize: 9 }}>24h</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Daily Checklist */}
+        <div style={{ ...sty.card, border: "1px solid rgba(34,197,94,0.15)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h3 style={{ color: "#86efac", margin: 0, fontSize: 14 }}>✅ {lang === "ro" ? "Checklist Zilnic" : "Daily Checklist"} ({checkCount}/{CHECKLIST_ITEMS.length})</h3>
+            <span style={{ color: checkPct === 100 ? "#4ade80" : "#fbbf24", fontSize: 14, fontWeight: 700 }}>{checkPct}%</span>
+          </div>
+          <div style={{ background: "#1e293b", borderRadius: 6, height: 6, marginBottom: 12, overflow: "hidden" }}>
+            <div style={{ background: checkPct === 100 ? "#22c55e" : "linear-gradient(90deg, #22c55e, #16a34a)", height: "100%", width: `${checkPct}%`, borderRadius: 6, transition: "width 0.3s" }} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            {CHECKLIST_ITEMS.map(item => {
+              const checked = todayTracker.checklist?.[item.key];
+              return (
+                <button key={item.key} onClick={() => toggleCheck(item.key)} style={{
+                  background: checked ? "rgba(34,197,94,0.1)" : "#1e293b", border: checked ? "1px solid #22c55e44" : "1px solid #33415544",
+                  borderRadius: 10, padding: "10px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s"
+                }}>
+                  <span style={{ width: 20, height: 20, borderRadius: 6, border: checked ? "2px solid #22c55e" : "2px solid #475569", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#22c55e", flexShrink: 0 }}>
+                    {checked ? "✓" : ""}
+                  </span>
+                  <span style={{ fontSize: 12 }}>{item.icon}</span>
+                  <span style={{ color: checked ? "#4ade80" : "#94a3b8", fontSize: 12, textDecoration: checked ? "line-through" : "none" }}>{item.label[lang]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* History mini */}
+        {Object.keys(trackerData).length > 1 && (
+          <div style={{ ...sty.card }}>
+            <h3 style={{ color: "#e2e8f0", margin: "0 0 10px", fontSize: 13 }}>📅 {lang === "ro" ? "Ultimele 7 zile" : "Last 7 days"}</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+              {Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(); d.setDate(d.getDate() - (6 - i));
+                const ds = d.toISOString().split("T")[0];
+                const day = trackerData[ds];
+                const checks = day?.checklist ? Object.values(day.checklist).filter(Boolean).length : 0;
+                const pct = Math.round(checks / CHECKLIST_ITEMS.length * 100);
+                return (
+                  <div key={ds} style={{ textAlign: "center", padding: 6, background: ds === today ? "#1e293b" : "transparent", borderRadius: 8, border: ds === today ? "1px solid #33415588" : "none" }}>
+                    <div style={{ color: "#475569", fontSize: 9 }}>{["Du","Lu","Ma","Mi","Jo","Vi","Sa"][d.getDay()]}</div>
+                    <div style={{ color: pct >= 80 ? "#4ade80" : pct > 0 ? "#fbbf24" : "#334155", fontSize: 16, margin: "2px 0" }}>{pct >= 80 ? "🟢" : pct > 0 ? "🟡" : "⚫"}</div>
+                    <div style={{ color: "#475569", fontSize: 9 }}>{day?.weight ? `${day.weight}kg` : ""}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderChat = () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, height: "70vh" }}>
-      <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #0a2818, #0a1628)", border: "1px solid rgba(34,197,94,0.2)", flexShrink: 0 }}>
-        <h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>🤖 {t.chat.title}</h2>
-        <p style={{ color: "#64748b", margin: "4px 0 0", fontSize: 11 }}>{t.chat.subtitle}</p>
+      <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #0a2818, #0a1628)", border: "1px solid rgba(34,197,94,0.2)", flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 18 }}>🤖 {t.chat.title}</h2>
+          <p style={{ color: "#64748b", margin: "4px 0 0", fontSize: 11 }}>{t.chat.subtitle}</p>
+        </div>
+        {chatMsgs.length > 0 && <button onClick={clearChat} style={sty.btn("#ef4444")}>{lang === "ro" ? "Sterge Chat" : "Clear Chat"}</button>}
       </div>
       <div ref={chatRef} style={{ ...sty.card, flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, padding: 16 }}>
         <div style={{ background: "rgba(34,197,94,0.08)", borderRadius: 12, padding: 12, borderLeft: "3px solid #22c55e", maxWidth: "85%" }}>
@@ -1026,7 +1377,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     </div>
   );
 
-  const CONTENT = { dashboard: renderDashboard, whoop: renderWhoop, labs: renderLabs, biomarkers: renderBiomarkers, protocols: renderProtocols, supplements: renderSupplements, exercise: renderExercise, nutrition: renderNutrition, sleep: renderSleep, screening: renderScreening, chat: renderChat };
+  const CONTENT = { dashboard: renderDashboard, tracker: renderTracker, whoop: renderWhoop, labs: renderLabs, biomarkers: renderBiomarkers, protocols: renderProtocols, supplements: renderSupplements, exercise: renderExercise, nutrition: renderNutrition, sleep: renderSleep, screening: renderScreening, chat: renderChat };
 
   if (!ready) return <div style={{ minHeight: "100vh", background: "#020617", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#8b5cf6", fontSize: 14 }}>⏳ Loading LONGEVITY OS...</div></div>;
 
@@ -1046,7 +1397,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
         </div>
         <div style={{ display: "flex", gap: 1, overflowX: "auto", paddingBottom: 0 }}>
           {Object.entries(t.tabs).map(([id, label]) => {
-            const icons = { dashboard: "◉", whoop: "⌚", labs: "🧪", biomarkers: "🧬", protocols: "⚗️", supplements: "💊", exercise: "🏋️", nutrition: "🥗", sleep: "🌙", screening: "🔬", chat: "🤖" };
+            const icons = { dashboard: "◉", tracker: "📊", whoop: "⌚", labs: "🧪", biomarkers: "🧬", protocols: "⚗️", supplements: "💊", exercise: "🏋️", nutrition: "🥗", sleep: "🌙", screening: "🔬", chat: "🤖" };
             return (
               <button key={id} onClick={() => setTab(id)} style={{
                 background: tab === id ? "rgba(139,92,246,0.15)" : "transparent",
@@ -1061,6 +1412,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
       </div>
       {/* CONTENT */}
       <div style={{ padding: "18px 20px", maxWidth: 1100, margin: "0 auto" }}>{CONTENT[tab]?.()}</div>
+      {renderInfoPopup()}
       {/* FOOTER */}
       <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(30,41,59,0.3)", textAlign: "center" }}>
         <p style={{ color: "#334155", fontSize: 8, margin: 0 }}>{t.disclaimer}</p>
