@@ -286,6 +286,8 @@ export default function App() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [showSync, setShowSync] = useState(false);
+  const syncFileRef = useRef(null);
   const [trackerData, setTrackerData] = useState(() => {
     try { const s = localStorage.getItem("tracker-v4"); return s ? JSON.parse(s) : {}; } catch { return {}; }
   });
@@ -357,6 +359,30 @@ export default function App() {
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [chatMsgs]);
   useEffect(() => { try { localStorage.setItem("chat-v4", JSON.stringify(chatMsgs.slice(-50))); } catch {} }, [chatMsgs]);
   const clearChat = () => { setChatMsgs([]); try { localStorage.removeItem("chat-v4"); } catch {} };
+
+  const exportAllData = () => {
+    const data = { whoop: whoopData, labs: labData, tracker: trackerData, chat: chatMsgs, exportDate: new Date().toISOString(), version: "6.0" };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `longevity-os-backup-${today}.json`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const importAllData = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.whoop) { setWhoopData(data.whoop); saveWhoop(data.whoop); }
+        if (data.labs) { setLabData(data.labs); saveLabs(data.labs); }
+        if (data.tracker) { setTrackerData(data.tracker); try { localStorage.setItem("tracker-v4", JSON.stringify(data.tracker)); } catch {} }
+        if (data.chat) { setChatMsgs(data.chat); }
+        setShowSync(false);
+        alert(lang === "ro" ? "Import reusit! Toate datele au fost restaurate." : "Import successful! All data restored.");
+      } catch { alert(lang === "ro" ? "Fisier invalid." : "Invalid file."); }
+    };
+    reader.readAsText(file); e.target.value = "";
+  };
 
   const [infoPopup, setInfoPopup] = useState(null);
 
@@ -1307,28 +1333,106 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
           </div>
         </div>
 
-        {/* History mini */}
-        {Object.keys(trackerData).length > 1 && (
-          <div style={{ ...sty.card }}>
-            <h3 style={{ color: "#e2e8f0", margin: "0 0 10px", fontSize: 13 }}>📅 {lang === "ro" ? "Ultimele 7 zile" : "Last 7 days"}</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-              {Array.from({ length: 7 }, (_, i) => {
-                const d = new Date(); d.setDate(d.getDate() - (6 - i));
-                const ds = d.toISOString().split("T")[0];
-                const day = trackerData[ds];
-                const checks = day?.checklist ? Object.values(day.checklist).filter(Boolean).length : 0;
-                const pct = Math.round(checks / CHECKLIST_ITEMS.length * 100);
-                return (
-                  <div key={ds} style={{ textAlign: "center", padding: 6, background: ds === today ? "#1e293b" : "transparent", borderRadius: 8, border: ds === today ? "1px solid #33415588" : "none" }}>
-                    <div style={{ color: "#475569", fontSize: 9 }}>{["Du","Lu","Ma","Mi","Jo","Vi","Sa"][d.getDay()]}</div>
-                    <div style={{ color: pct >= 80 ? "#4ade80" : pct > 0 ? "#fbbf24" : "#334155", fontSize: 16, margin: "2px 0" }}>{pct >= 80 ? "🟢" : pct > 0 ? "🟡" : "⚫"}</div>
-                    <div style={{ color: "#475569", fontSize: 9 }}>{day?.weight ? `${day.weight}kg` : ""}</div>
+        {/* 30-Day Calendar */}
+        <div style={{ ...sty.card }}>
+          <h3 style={{ color: "#e2e8f0", margin: "0 0 10px", fontSize: 13 }}>📅 {lang === "ro" ? "Calendar (30 zile)" : "Calendar (30 days)"}</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 6 }}>
+            {(lang === "ro" ? ["Lu","Ma","Mi","Jo","Vi","Sa","Du"] : ["Mo","Tu","We","Th","Fr","Sa","Su"]).map(d => (
+              <div key={d} style={{ color: "#475569", fontSize: 9, textAlign: "center", padding: 2 }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+            {Array.from({ length: 30 }, (_, i) => {
+              const d = new Date(); d.setDate(d.getDate() - (29 - i));
+              const ds = d.toISOString().split("T")[0];
+              const day = trackerData[ds];
+              const checks = day?.checklist ? Object.values(day.checklist).filter(Boolean).length : 0;
+              const pct = Math.round(checks / CHECKLIST_ITEMS.length * 100);
+              const isToday = ds === today;
+              return (
+                <div key={ds} style={{ textAlign: "center", padding: "4px 2px", background: isToday ? "#1e293b" : "transparent", borderRadius: 8, border: isToday ? "1px solid #8b5cf644" : "1px solid transparent" }}>
+                  <div style={{ color: isToday ? "#c4b5fd" : "#475569", fontSize: 9, fontWeight: isToday ? 600 : 400 }}>{d.getDate()}</div>
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", margin: "3px auto", background: pct >= 80 ? "#22c55e33" : pct > 0 ? "#eab30833" : "#1e293b", border: `2px solid ${pct >= 80 ? "#22c55e" : pct > 0 ? "#eab308" : "#1e293b"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {pct >= 80 && <span style={{ color: "#22c55e", fontSize: 10 }}>✓</span>}
                   </div>
-                );
-              })}
+                  <div style={{ color: "#334155", fontSize: 7 }}>{day?.weight ? `${day.weight}` : ""}</div>
+                  <div style={{ color: "#334155", fontSize: 7 }}>{day?.mood ? ["😫","😕","😐","🙂","😄"][day.mood-1] : ""}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 12, marginTop: 10, justifyContent: "center" }}>
+            <span style={{ color: "#475569", fontSize: 9, display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: "50%", border: "2px solid #22c55e", display: "inline-block" }}></span> {lang === "ro" ? "80%+ completat" : "80%+ completed"}</span>
+            <span style={{ color: "#475569", fontSize: 9, display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: "50%", border: "2px solid #eab308", display: "inline-block" }}></span> {lang === "ro" ? "Partial" : "Partial"}</span>
+            <span style={{ color: "#475569", fontSize: 9, display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: "50%", background: "#1e293b", display: "inline-block" }}></span> {lang === "ro" ? "Nimic" : "Nothing"}</span>
+          </div>
+        </div>
+
+        {/* Weight Chart Full */}
+        {weightTrend.length > 2 && (
+          <div style={{ ...sty.card, border: "1px solid rgba(6,182,212,0.15)" }}>
+            <h3 style={{ color: "#22d3ee", margin: "0 0 12px", fontSize: 13 }}>📉 {lang === "ro" ? "Evolutie Greutate" : "Weight Trend"}</h3>
+            <MiniChart data={weightTrend} color="#22d3ee" h={80} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+              <div><span style={{ color: "#475569", fontSize: 9 }}>{lang === "ro" ? "Prima" : "First"}: </span><span style={{ color: "#22d3ee", fontSize: 11, fontWeight: 600 }}>{weightTrend[0]?.v} kg</span></div>
+              <div><span style={{ color: "#475569", fontSize: 9 }}>{lang === "ro" ? "Acum" : "Now"}: </span><span style={{ color: "#22d3ee", fontSize: 11, fontWeight: 600 }}>{weightTrend[weightTrend.length-1]?.v} kg</span></div>
+              <div><span style={{ color: "#475569", fontSize: 9 }}>{lang === "ro" ? "Diferenta" : "Change"}: </span><span style={{ color: (weightTrend[weightTrend.length-1]?.v - weightTrend[0]?.v) <= 0 ? "#4ade80" : "#f87171", fontSize: 11, fontWeight: 600 }}>{((weightTrend[weightTrend.length-1]?.v - weightTrend[0]?.v)).toFixed(1)} kg</span></div>
+              <div><span style={{ color: "#475569", fontSize: 9 }}>Target: </span><span style={{ color: "#fbbf24", fontSize: 11, fontWeight: 600 }}>84 kg</span></div>
             </div>
           </div>
         )}
+
+        {/* Lab Trends & Recommendations */}
+        {labData.length > 0 && (() => {
+          const criticalBMs = BIOMARKERS.filter(bm => {
+            const lv = getLabValue(bm.key);
+            return lv && getZone(bm, lv.v) !== "optimal";
+          }).slice(0, 6);
+          const improvedBMs = BIOMARKERS.filter(bm => {
+            const trend = getLabTrend(bm.key);
+            if (trend.length < 2) return false;
+            const z1 = getZone(bm, trend[trend.length-2].v);
+            const z2 = getZone(bm, trend[trend.length-1].v);
+            return (z1 === "critical" && z2 !== "critical") || (z1 === "warning" && z2 === "optimal");
+          });
+          return (criticalBMs.length > 0 || improvedBMs.length > 0) ? (
+            <div style={{ ...sty.card, border: "1px solid rgba(236,72,153,0.15)" }}>
+              <h3 style={{ color: "#f9a8d4", margin: "0 0 12px", fontSize: 13 }}>🩺 {lang === "ro" ? "Analiza Analize Sange" : "Blood Test Analysis"}</h3>
+              {improvedBMs.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ color: "#4ade80", fontSize: 11, fontWeight: 600, marginBottom: 6 }}>{lang === "ro" ? "IMBUNATATITE" : "IMPROVED"} ✅</div>
+                  {improvedBMs.map(bm => {
+                    const trend = getLabTrend(bm.key);
+                    return (
+                      <div key={bm.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderBottom: "1px solid #1e293b" }}>
+                        <span style={{ color: "#94a3b8", fontSize: 11 }}>{bm.name[lang]}</span>
+                        <span style={{ color: "#4ade80", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{trend[trend.length-2]?.v} → {trend[trend.length-1]?.v} {bm.unit}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {criticalBMs.length > 0 && (
+                <div>
+                  <div style={{ color: "#f87171", fontSize: 11, fontWeight: 600, marginBottom: 6 }}>{lang === "ro" ? "NECESITA ATENTIE" : "NEEDS ATTENTION"} ⚠️</div>
+                  {criticalBMs.map(bm => {
+                    const lv = getLabValue(bm.key); const z = getZone(bm, lv.v); const c = zoneColor[z];
+                    const info = getInfoForBM(bm);
+                    return (
+                      <div key={bm.key} style={{ background: `${c}08`, borderRadius: 8, padding: 10, marginBottom: 6, borderLeft: `3px solid ${c}` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: "#e2e8f0", fontSize: 12, fontWeight: 600 }}>{bm.name[lang]}</span>
+                          <div><span style={{ color: c, fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{lv.v}</span><span style={{ color: "#475569", fontSize: 10, marginLeft: 4 }}>{bm.unit} (target: {bm.target})</span></div>
+                        </div>
+                        <div style={{ color: "#94a3b8", fontSize: 10, marginTop: 4 }}>{info.a}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null;
+        })()}
       </div>
     );
   };
@@ -1391,9 +1495,14 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
             <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #8b5cf6, #6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700 }}>∞</div>
             <div><h1 style={{ margin: 0, fontSize: 16, fontFamily: "'Playfair Display', serif" }}>LONGEVITY OS</h1><p style={{ margin: 0, color: "#64748b", fontSize: 9, letterSpacing: 2, textTransform: "uppercase" }}>v4.0 • {t.subtitle}</p></div>
           </div>
-          <button onClick={() => setLang(lang === "ro" ? "en" : "ro")} style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>
-            {lang === "ro" ? "🇷🇴 RO → EN" : "🇬🇧 EN → RO"}
-          </button>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={() => setShowSync(!showSync)} style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+              {lang === "ro" ? "🔄 Sync" : "🔄 Sync"}
+            </button>
+            <button onClick={() => setLang(lang === "ro" ? "en" : "ro")} style={{ background: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>
+              {lang === "ro" ? "RO > EN" : "EN > RO"}
+            </button>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 1, overflowX: "auto", paddingBottom: 0 }}>
           {Object.entries(t.tabs).map(([id, label]) => {
@@ -1411,6 +1520,28 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
         </div>
       </div>
       {/* CONTENT */}
+      {showSync && (
+        <div style={{ padding: "12px 20px", maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ background: "#0f172a", borderRadius: 14, padding: 20, border: "1px solid rgba(34,197,94,0.2)" }}>
+            <h3 style={{ color: "#4ade80", margin: "0 0 10px", fontSize: 14 }}>🔄 {lang === "ro" ? "Sincronizare Dispozitive" : "Device Sync"}</h3>
+            <p style={{ color: "#94a3b8", fontSize: 11, margin: "0 0 14px", lineHeight: 1.5 }}>
+              {lang === "ro" ? "Datele se salveaza local pe fiecare dispozitiv. Ca sa transferi datele de pe iPhone pe Samsung (sau invers), exporta un backup si importa-l pe celalalt telefon." : "Data is saved locally on each device. To transfer data from iPhone to Samsung (or vice versa), export a backup and import it on the other phone."}
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={exportAllData} style={{ ...sty.btnPrimary, background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
+                {lang === "ro" ? "📥 Exporta Backup (JSON)" : "📥 Export Backup (JSON)"}
+              </button>
+              <button onClick={() => syncFileRef.current?.click()} style={{ ...sty.btnPrimary, background: "linear-gradient(135deg, #3b82f6, #2563eb)" }}>
+                {lang === "ro" ? "📤 Importa Backup" : "📤 Import Backup"}
+              </button>
+              <input ref={syncFileRef} type="file" accept=".json" onChange={importAllData} style={{ display: "none" }} />
+            </div>
+            <div style={{ marginTop: 12, color: "#475569", fontSize: 10, lineHeight: 1.6 }}>
+              {lang === "ro" ? "Pas 1: Pe telefonul cu date, apasa 'Exporta Backup' — se descarca un fisier JSON. Pas 2: Trimite-ti fisierul pe celalalt telefon (email, WhatsApp, AirDrop). Pas 3: Pe celalalt telefon, apasa 'Importa Backup' si alege fisierul." : "Step 1: On the phone with data, press 'Export Backup' — downloads a JSON file. Step 2: Send the file to the other phone (email, WhatsApp, AirDrop). Step 3: On the other phone, press 'Import Backup' and select the file."}
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ padding: "18px 20px", maxWidth: 1100, margin: "0 auto" }}>{CONTENT[tab]?.()}</div>
       {renderInfoPopup()}
       {/* FOOTER */}
