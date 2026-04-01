@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const T = {
   ro: {
     title: "LONGEVITY OS", subtitle: "Protocol Personalizat • Tahsin",
-    tabs: { dashboard: "Dashboard", tracker: "Tracker", whoop: "WHOOP", labs: "Analize", biomarkers: "Biomarkeri", protocols: "Protocoale", supplements: "Suplimente", exercise: "Exercitii", nutrition: "Nutritie", sleep: "Somn", screening: "Screening", chat: "AI Coach" },
+    tabs: { dashboard: "Dashboard", tracker: "Tracker", whoop: "WHOOP", labs: "Analize", biomarkers: "Biomarkeri", protocols: "Protocoale", supplements: "Suplimente", exercise: "Exercitii", nutrition: "Nutritie", sleep: "Somn", screening: "Screening", insights: "Insights", chat: "AI Coach" },
     dash: { chronoAge: "Vârstă Cronologică", bioTarget: "Obiectiv Biologic", biomarkers: "Biomarkeri", born: "Născut 21 Nov 1982", reduction: "Reducere 8 ani", fullMonitor: "Monitorizare completă", dailyRoutine: "RUTINA ZILNICĂ", topPriorities: "TOP 5 PRIORITĂȚI", sources: "SURSE & MENTORI", lastRecovery: "WHOOP Recovery", lastLabs: "Ultima Analiză" },
     whoop: { title: "WHOOP Life Tracker", subtitle: "Introdu datele zilnic din WHOOP app", entries: "înregistrări", addData: "+ Adaugă Date", cancel: "✕ Anulează", date: "Data", save: "💾 Salvează", lastEntry: "Ultima Înregistrare", trends: "📈 Trenduri (14 zile)", insights: "🧠 INSIGHTS", history: "📋 Istoric", days: "zile", noData: "Nicio înregistrare WHOOP", noDataSub: "Apasa [+ Adauga Date] si introdu metricile din WHOOP app.", avg7: "7-day avg" },
     labs: { title: "Analize de Sânge", subtitle: "Introdu rezultatele analizelor de la laborator", addLab: "+ Adaugă Rezultate", noLabs: "Nicio analiză încă", noLabsSub: "Adaugă prima analiză de sânge pentru tracking complet.", labDate: "Data analizei", labName: "Nume laborator", category: "Categorie", all: "Toate", latestResults: "Ultimele Rezultate", labHistory: "Istoric Analize", optimal: "OPTIM", warning: "ATENȚIE", critical: "CRITIC", target: "Target", value: "Valoare", save: "💾 Salvează Analiza", viewAll: "Vezi tot", trend: "Trend" },
@@ -32,7 +32,7 @@ const T = {
   },
   en: {
     title: "LONGEVITY OS", subtitle: "Personalized Protocol • Tahsin",
-    tabs: { dashboard: "Dashboard", tracker: "Tracker", whoop: "WHOOP", labs: "Lab Results", biomarkers: "Biomarkers", protocols: "Protocols", supplements: "Supplements", exercise: "Exercise", nutrition: "Nutrition", sleep: "Sleep", screening: "Screening", chat: "AI Coach" },
+    tabs: { dashboard: "Dashboard", tracker: "Tracker", whoop: "WHOOP", labs: "Lab Results", biomarkers: "Biomarkers", protocols: "Protocols", supplements: "Supplements", exercise: "Exercise", nutrition: "Nutrition", sleep: "Sleep", screening: "Screening", insights: "Insights", chat: "AI Coach" },
     dash: { chronoAge: "Chronological Age", bioTarget: "Biological Target", biomarkers: "Biomarkers", born: "Born Nov 21, 1982", reduction: "8 year reduction", fullMonitor: "Full monitoring", dailyRoutine: "DAILY ROUTINE", topPriorities: "TOP 5 PRIORITIES", sources: "SOURCES & MENTORS", lastRecovery: "WHOOP Recovery", lastLabs: "Last Lab Test" },
     whoop: { title: "WHOOP Life Tracker", subtitle: "Enter daily metrics from WHOOP app", entries: "entries", addData: "+ Add Data", cancel: "✕ Cancel", date: "Date", save: "💾 Save", lastEntry: "Latest Entry", trends: "📈 Trends (14 days)", insights: "🧠 INSIGHTS", history: "📋 History", days: "days", noData: "No WHOOP data yet", noDataSub: "Click '+ Add Data' to enter your WHOOP metrics.", avg7: "7-day avg" },
     labs: { title: "Blood Tests", subtitle: "Enter lab results for complete tracking", addLab: "+ Add Results", noLabs: "No lab results yet", noLabsSub: "Add your first blood test for complete tracking.", labDate: "Test date", labName: "Lab name", category: "Category", all: "All", latestResults: "Latest Results", labHistory: "Lab History", optimal: "OPTIMAL", warning: "WARNING", critical: "CRITICAL", target: "Target", value: "Value", save: "💾 Save Results", viewAll: "View all", trend: "Trend" },
@@ -385,6 +385,103 @@ export default function App() {
   };
 
   const [infoPopup, setInfoPopup] = useState(null);
+  const [weeklyReport, setWeeklyReport] = useState(null);
+  const [weeklyLoading, setWeeklyLoading] = useState(false);
+
+  // BIOLOGICAL AGE (PhenoAge-inspired calculation)
+  const calcBioAge = () => {
+    const vals = {};
+    ["glucose","hscrp","hba1c","alt","egfr","wbc","hgb","albumin"].forEach(k => { const lv = getLabValue(k); if (lv) vals[k] = parseFloat(lv.v); });
+    const filled = Object.keys(vals).length;
+    if (filled < 3) return null;
+    let bioAge = 43; // chronological
+    if (vals.glucose) bioAge += vals.glucose > 85 ? (vals.glucose - 85) * 0.15 : (vals.glucose - 85) * 0.1;
+    if (vals.hscrp) bioAge += vals.hscrp > 0.5 ? (vals.hscrp - 0.5) * 2 : (vals.hscrp - 0.5) * 1;
+    if (vals.hba1c) bioAge += vals.hba1c > 5.2 ? (vals.hba1c - 5.2) * 3 : (vals.hba1c - 5.2) * 1.5;
+    if (vals.alt) bioAge += vals.alt > 25 ? (vals.alt - 25) * 0.1 : -0.5;
+    if (vals.egfr) bioAge += vals.egfr < 90 ? (90 - vals.egfr) * 0.1 : -1;
+    if (vals.wbc) bioAge += vals.wbc > 6.5 ? (vals.wbc - 6.5) * 0.5 : 0;
+    if (vals.albumin) bioAge += vals.albumin < 4 ? (4 - vals.albumin) * 3 : -0.5;
+    if (latestW?.hrv) { const h = parseFloat(latestW.hrv); bioAge += h > 50 ? -2 : h > 30 ? 0 : 2; }
+    if (latestW?.rhr) { const r = parseFloat(latestW.rhr); bioAge += r < 55 ? -1 : r > 70 ? 1 : 0; }
+    return Math.max(25, Math.min(60, Math.round(bioAge * 10) / 10));
+  };
+
+  // SMART ALERTS
+  const getAlerts = () => {
+    const alerts = [];
+    const L = lang === "ro";
+    // WHOOP alerts
+    if (latestW) {
+      const last3 = whoopData.slice(-3);
+      const avgHRV = last3.filter(e => e.hrv).reduce((s, e) => s + parseFloat(e.hrv), 0) / Math.max(1, last3.filter(e => e.hrv).length);
+      if (avgHRV < 30 && last3.length >= 3) alerts.push({ type: "danger", icon: "💓", msg: L ? "HRV scazut 3 zile la rand! Posibil overtraining sau boala incipenta." : "Low HRV 3 consecutive days! Possible overtraining or illness.", action: L ? "Recuperare activa, somn mai mult, reduce stresul" : "Active recovery, more sleep, reduce stress" });
+      if (latestW.recovery && parseFloat(latestW.recovery) < 34) alerts.push({ type: "warning", icon: "⚠️", msg: L ? "Recovery sub 34% — corpul nu s-a recuperat." : "Recovery below 34% — body hasn't recovered.", action: L ? "Azi doar Zone 2 sau stretching" : "Today only Zone 2 or stretching" });
+      if (latestW.sleepH && parseFloat(latestW.sleepH) < 6) alerts.push({ type: "danger", icon: "😴", msg: L ? "Sub 6h somn — impact sever pe sanatate!" : "Under 6h sleep — severe health impact!", action: L ? "Culca-te cu 1h mai devreme diseara" : "Go to bed 1h earlier tonight" });
+    }
+    // Lab alerts
+    const critLabs = ["glucose","hba1c","hscrp","apob","ldl","testTotal","vitd","vitb12","ferritin","psa"];
+    critLabs.forEach(key => {
+      const lv = getLabValue(key); const bm = BIOMARKERS.find(b => b.key === key);
+      if (lv && bm && getZone(bm, lv.v) === "critical") {
+        alerts.push({ type: "danger", icon: "🩸", msg: `${bm.name[lang]}: ${lv.v} ${bm.unit} — ${L ? "CRITIC!" : "CRITICAL!"}`, action: bm.imp[lang] });
+      }
+    });
+    // Screening alerts
+    const overdueScreenings = SCREENINGS.filter(s => s.due === "2026");
+    if (overdueScreenings.length > 3) alerts.push({ type: "warning", icon: "🔬", msg: L ? `${overdueScreenings.length} screening-uri neprogramate!` : `${overdueScreenings.length} screenings not scheduled!`, action: L ? "Programeaza-le cat mai curand" : "Schedule them ASAP" });
+    // Tracker alerts
+    const checkCount = todayTracker.checklist ? Object.values(todayTracker.checklist).filter(Boolean).length : 0;
+    if (checkCount === 0 && new Date().getHours() >= 14) alerts.push({ type: "info", icon: "📋", msg: L ? "Nu ai completat checklist-ul azi!" : "You haven't completed today's checklist!", action: L ? "Du-te la tab-ul Tracker" : "Go to Tracker tab" });
+    return alerts;
+  };
+
+  // SUPPLEMENT INTERACTIONS
+  const INTERACTIONS = [
+    { a: "Rapamicina", b: "Grapefruit", severity: "danger", note: { ro: "Grapefruit creste DRASTIC nivelul Rapamicina! Evita total.", en: "Grapefruit DRASTICALLY increases Rapamycin levels! Avoid completely." } },
+    { a: "Metformina", b: "Vitamina B12", severity: "warning", note: { ro: "Metformina reduce absorbtia B12. Suplimenteaza B12 OBLIGATORIU.", en: "Metformin reduces B12 absorption. Supplement B12 MANDATORY." } },
+    { a: "Metformina", b: "Alcool", severity: "danger", note: { ro: "Risc de acidoza lactica. Evita alcoolul cu Metformina.", en: "Lactic acidosis risk. Avoid alcohol with Metformin." } },
+    { a: "Metformina", b: "Antrenament intens", severity: "warning", note: { ro: "Blocheaza adaptarea musculara (mTOR). Nu lua in zilele de forta.", en: "Blocks muscle adaptation (mTOR). Don't take on strength days." } },
+    { a: "Rapamicina", b: "Vaccin", severity: "warning", note: { ro: "Immunosupresie temporara. Pauza Rapamicina 1 sapt inainte de vaccin.", en: "Temporary immunosuppression. Pause Rapamycin 1 week before vaccine." } },
+    { a: "Omega-3", b: "Anticoagulante", severity: "warning", note: { ro: "Efect aditiv pe fluidizare sange. Monitorizare INR.", en: "Additive blood thinning effect. Monitor INR." } },
+    { a: "Vitamina D", b: "Fara K2", severity: "warning", note: { ro: "D3 fara K2 = risc calcificare artere! Ia INTOTDEAUNA K2 cu D3.", en: "D3 without K2 = artery calcification risk! ALWAYS take K2 with D3." } },
+    { a: "Zinc", b: "Cupru", severity: "info", note: { ro: "Zinc mare depleteaza cupru. Daca iei 30mg+ zinc, adauga 2mg cupru.", en: "High zinc depletes copper. If taking 30mg+ zinc, add 2mg copper." } },
+    { a: "Fier", b: "Ceai/Cafea", severity: "warning", note: { ro: "Tanninul blocheaza absorbtia fierului. Ia fierul separat de cafea.", en: "Tannins block iron absorption. Take iron separately from coffee." } },
+    { a: "Calcium", b: "Fier", severity: "warning", note: { ro: "Se blocheaza reciproc. Nu le lua in acelasi timp.", en: "They block each other. Don't take at the same time." } },
+    { a: "Ashwagandha", b: "Tiroidiene", severity: "warning", note: { ro: "Ashwagandha creste hormoni tiroidieni. Atentie cu hipertiroidism.", en: "Ashwagandha increases thyroid hormones. Caution with hyperthyroidism." } },
+    { a: "NMN", b: "Chimioterapie", severity: "danger", note: { ro: "NAD+ alimenteaza si celulele canceroase. STOP NMN in timpul chimio.", en: "NAD+ also feeds cancer cells. STOP NMN during chemo." } },
+    { a: "Curcumina", b: "Anticoagulante", severity: "warning", note: { ro: "Efect anticoagulant aditiv. Monitorizare.", en: "Additive anticoagulant effect. Monitor." } },
+    { a: "Berberine", b: "Metformina", severity: "warning", note: { ro: "Amandoua scad glucoza. Risc hipoglicemie daca le combini.", en: "Both lower glucose. Hypoglycemia risk if combined." } },
+    { a: "Semaglutid", b: "Amilaza/Lipaza", severity: "info", note: { ro: "Monitorizare obligatorie. GLP-1 poate afecta pancreasul.", en: "Mandatory monitoring. GLP-1 can affect pancreas." } },
+    { a: "Dasatinib", b: "Ficat", severity: "danger", note: { ro: "Hepatotoxic. Monitorizare ALT/AST inainte si dupa fiecare ciclu D+Q.", en: "Hepatotoxic. Monitor ALT/AST before and after each D+Q cycle." } },
+  ];
+
+  // GENERATE WEEKLY REPORT via AI
+  const generateWeeklyReport = async () => {
+    setWeeklyLoading(true);
+    const last7W = whoopData.slice(-7);
+    const whoopSummary = last7W.map(e => `${e.date}: Recovery=${e.recovery||"?"}%, HRV=${e.hrv||"?"}, Sleep=${e.sleepH||"?"}h`).join("; ");
+    const labSummary = BIOMARKERS.map(b => { const lv = getLabValue(b.key); return lv ? `${b.name.en}: ${lv.v} ${b.unit}` : null; }).filter(Boolean).join(", ");
+    const checkHistory = Object.entries(trackerData).slice(-7).map(([d, v]) => { const c = v.checklist ? Object.values(v.checklist).filter(Boolean).length : 0; return `${d}: ${c}/${CHECKLIST_ITEMS.length}`; }).join(", ");
+    try {
+      const resp = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system: `You generate a weekly health report for Tahsin (43M, longevity protocol). Be specific with numbers. Use sections: SUMMARY, WINS, CONCERNS, ACTION ITEMS. Respond in ${lang === "ro" ? "Romanian" : "English"}.`,
+          messages: [{ role: "user", content: `Generate my weekly health report.\n\nWHOOP last 7 days: ${whoopSummary || "No data"}\nLab values: ${labSummary || "No data"}\nChecklist compliance: ${checkHistory || "No data"}\nWeight: ${todayTracker.weight || "unknown"}\nBiological age estimate: ${calcBioAge() || "unknown"}\nLongevity score: ${getLongevityScore()}/100` }] }) });
+      const data = await resp.json();
+      setWeeklyReport(data.reply || "Error");
+    } catch { setWeeklyReport(lang === "ro" ? "Eroare la generare." : "Generation error."); }
+    setWeeklyLoading(false);
+  };
+
+  // GENERATE PDF REPORT
+  const generatePdfReport = () => {
+    const bioAge = calcBioAge();
+    const labRows = BIOMARKERS.map(bm => { const lv = getLabValue(bm.key); if (!lv) return ""; const z = getZone(bm, lv.v); const color = z === "optimal" ? "#22c55e" : z === "warning" ? "#eab308" : "#ef4444"; return `<tr><td>${bm.name.en}</td><td style="font-weight:700;color:${color}">${lv.v} ${bm.unit}</td><td>${bm.target} ${bm.unit}</td><td style="color:${color}">${z?.toUpperCase()}</td><td>${lv.date}</td></tr>`; }).filter(Boolean).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Longevity OS - Medical Report</title><style>body{font-family:Helvetica,Arial,sans-serif;padding:40px;color:#1a1a1a;max-width:800px;margin:0 auto}h1{color:#4f46e5;border-bottom:2px solid #4f46e5;padding-bottom:10px}h2{color:#334155;margin-top:30px}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#f1f5f9;text-align:left;padding:8px;font-size:12px}td{padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin:15px 0}.card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:15px;text-align:center}.card h3{margin:0;font-size:11px;color:#64748b}.card p{margin:5px 0 0;font-size:24px;font-weight:700}.footer{margin-top:40px;padding-top:15px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8}@media print{body{padding:20px}}</style></head><body><h1>LONGEVITY OS - Health Report</h1><p>Patient: Tahsin | Age: 43 | Date: ${today}</p><div class="grid"><div class="card"><h3>Chronological Age</h3><p>43</p></div><div class="card"><h3>Biological Age</h3><p style="color:${bioAge && bioAge < 43 ? '#22c55e' : '#ef4444'}">${bioAge || "N/A"}</p></div><div class="card"><h3>Longevity Score</h3><p>${getLongevityScore()}/100</p></div></div><h2>Blood Test Results</h2><table><tr><th>Biomarker</th><th>Value</th><th>Target</th><th>Status</th><th>Date</th></tr>${labRows}</table><h2>Current Protocols</h2><ul>${PROTOCOLS.map(p => `<li><strong>${p.name.en}</strong> — ${p.proto.en}</li>`).join("")}</ul><h2>Supplements</h2><ul>${SUPPLEMENTS.map(s => `<li><strong>${s.name}</strong> ${s.dose} — ${s.timing.en}</li>`).join("")}</ul><div class="footer"><p>Generated by LONGEVITY OS | For medical professional review | Not a substitute for medical advice</p></div></body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `longevity-report-${today}.html`; a.click(); URL.revokeObjectURL(url);
+  };
 
   const loadAll = async () => {
     try { const r = localStorage.getItem("whoop-v4"); if (r) setWhoopData(JSON.parse(r)); } catch {}
@@ -792,7 +889,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
         <h2 style={{ color: "#e2e8f0", margin: 0, fontSize: 20, fontFamily: "'Playfair Display', serif" }}>{t.title}</h2>
         <p style={{ color: "#94a3b8", margin: "6px 0 0", fontSize: 12 }}>{t.subtitle} • v4.0</p>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${latestW ? 4 : 3}, 1fr)`, gap: 14, marginTop: 18 }}>
-          {[{ l: t.dash.chronoAge, v: "43", s: t.dash.born }, { l: t.dash.bioTarget, v: "35", s: t.dash.reduction }, { l: lang === "ro" ? "Scor Longevitate" : "Longevity Score", v: getLongevityScore(), s: lang === "ro" ? "din 100" : "out of 100" },
+          {[{ l: t.dash.chronoAge, v: "43", s: t.dash.born }, { l: t.dash.bioTarget, v: "35", s: t.dash.reduction }, { l: lang === "ro" ? "Varsta Biologica" : "Biological Age", v: calcBioAge() || "?", s: lang === "ro" ? "din biomarkeri" : "from biomarkers" }, { l: lang === "ro" ? "Scor Longevitate" : "Longevity Score", v: getLongevityScore(), s: lang === "ro" ? "din 100" : "out of 100" },
             ...(latestW ? [{ l: t.dash.lastRecovery, v: latestW.recovery ? `${latestW.recovery}%` : "—", s: `HRV: ${latestW.hrv || "—"} ms` }] : [])
           ].map((c, i) => (
             <div key={i} style={{ background: "rgba(15,23,42,0.6)", borderRadius: 12, padding: 14, border: "1px solid rgba(100,116,139,0.15)", textAlign: "center" }}>
@@ -803,6 +900,22 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
           ))}
         </div>
       </div>
+      {/* Smart Alerts on Dashboard */}
+      {getAlerts().length > 0 && (
+        <div style={{ ...sty.card, border: "1px solid rgba(234,179,8,0.2)", padding: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+            <span style={{ fontSize: 14 }}>🚨</span>
+            <span style={{ color: "#fbbf24", fontSize: 12, fontWeight: 600 }}>{lang === "ro" ? "Alerte" : "Alerts"} ({getAlerts().length})</span>
+          </div>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+            {getAlerts().slice(0, 3).map((a, i) => (
+              <div key={i} style={{ background: `${a.type === "danger" ? "#ef4444" : a.type === "warning" ? "#eab308" : "#3b82f6"}11`, borderRadius: 8, padding: "6px 10px", borderLeft: `3px solid ${a.type === "danger" ? "#ef4444" : a.type === "warning" ? "#eab308" : "#3b82f6"}`, flexShrink: 0, minWidth: 200 }}>
+                <div style={{ color: "#e2e8f0", fontSize: 10 }}>{a.icon} {a.msg}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <div style={{ ...sty.card, border: "1px solid rgba(59,130,246,0.15)" }}>
           <h3 style={{ color: "#93c5fd", margin: "0 0 12px", fontSize: 13 }}>📋 {t.dash.dailyRoutine}</h3>
@@ -1437,6 +1550,120 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     );
   };
 
+  const renderInsights = () => {
+    const bioAge = calcBioAge();
+    const alerts = getAlerts();
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Bio Age + Alerts Header */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #1a0a28)", border: "1px solid rgba(139,92,246,0.2)", textAlign: "center" }}>
+            <div style={{ color: "#64748b", fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>{lang === "ro" ? "Varsta Biologica Estimata" : "Estimated Biological Age"}</div>
+            <div style={{ color: bioAge && bioAge < 43 ? "#4ade80" : bioAge ? "#f87171" : "#475569", fontSize: 42, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: "4px 0" }}>{bioAge || "?"}</div>
+            <div style={{ color: "#475569", fontSize: 10 }}>{lang === "ro" ? "vs. cronologica 43 ani" : "vs. chronological 43 yrs"} {bioAge ? `(${bioAge < 43 ? "-" : "+"}${Math.abs(43 - bioAge).toFixed(1)} ${lang === "ro" ? "ani" : "yrs"})` : ""}</div>
+            <div style={{ color: "#64748b", fontSize: 9, marginTop: 6 }}>{lang === "ro" ? "Calculat din: glucoza, HbA1c, CRP, ALT, eGFR, WBC, albumina, HRV" : "Calculated from: glucose, HbA1c, CRP, ALT, eGFR, WBC, albumin, HRV"}</div>
+          </div>
+          <div style={{ ...sty.card, border: "1px solid rgba(234,179,8,0.2)" }}>
+            <h3 style={{ color: "#fbbf24", margin: "0 0 10px", fontSize: 13 }}>🚨 {lang === "ro" ? "Alerte Inteligente" : "Smart Alerts"} ({alerts.length})</h3>
+            {alerts.length === 0 ? (
+              <div style={{ color: "#4ade80", fontSize: 12 }}>{lang === "ro" ? "Totul arata bine! Nicio alerta." : "All looks good! No alerts."}</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto" }}>
+                {alerts.map((a, i) => (
+                  <div key={i} style={{ background: a.type === "danger" ? "rgba(239,68,68,0.08)" : a.type === "warning" ? "rgba(234,179,8,0.08)" : "rgba(59,130,246,0.08)", borderRadius: 8, padding: 8, borderLeft: `3px solid ${a.type === "danger" ? "#ef4444" : a.type === "warning" ? "#eab308" : "#3b82f6"}` }}>
+                    <div style={{ color: "#e2e8f0", fontSize: 11 }}>{a.icon} {a.msg}</div>
+                    <div style={{ color: "#64748b", fontSize: 9, marginTop: 2 }}>{a.action}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Weekly Report */}
+        <div style={{ ...sty.card, border: "1px solid rgba(99,102,241,0.2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: weeklyReport ? 12 : 0 }}>
+            <h3 style={{ color: "#a5b4fc", margin: 0, fontSize: 14 }}>📋 {lang === "ro" ? "Raport Saptamanal AI" : "Weekly AI Report"}</h3>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={generatePdfReport} style={sty.btn("#22c55e")}>{lang === "ro" ? "📄 PDF Doctor" : "📄 Doctor PDF"}</button>
+              <button onClick={generateWeeklyReport} disabled={weeklyLoading} style={{ ...sty.btn("#8b5cf6"), opacity: weeklyLoading ? 0.5 : 1 }}>{weeklyLoading ? "⏳..." : (lang === "ro" ? "Genereaza Raport" : "Generate Report")}</button>
+            </div>
+          </div>
+          {weeklyReport && <div style={{ background: "#1e293b", borderRadius: 10, padding: 14, color: "#cbd5e1", fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{weeklyReport}</div>}
+        </div>
+
+        {/* Body Map */}
+        <div style={{ ...sty.card, border: "1px solid rgba(6,182,212,0.15)" }}>
+          <h3 style={{ color: "#22d3ee", margin: "0 0 12px", fontSize: 14 }}>🫀 {lang === "ro" ? "Harta Organelor" : "Body Organ Map"}</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            {[
+              { name: { ro: "Inima", en: "Heart" }, icon: "❤️", markers: ["apob","ldl","hdl","trig","hscrp","bnp"], tip: { ro: "ApoB, LDL, HDL, Trigliceride", en: "ApoB, LDL, HDL, Triglycerides" } },
+              { name: { ro: "Ficat", en: "Liver" }, icon: "🟤", markers: ["alt","ast","ggt","alp","tbili","albumin"], tip: { ro: "ALT, AST, GGT, Bilirubina", en: "ALT, AST, GGT, Bilirubin" } },
+              { name: { ro: "Rinichi", en: "Kidneys" }, icon: "🫘", markers: ["egfr","creatinine","bun","cysc"], tip: { ro: "eGFR, Creatinina, BUN", en: "eGFR, Creatinine, BUN" } },
+              { name: { ro: "Tiroida", en: "Thyroid" }, icon: "🦋", markers: ["tsh","ft3","ft4"], tip: { ro: "TSH, Free T3, Free T4", en: "TSH, Free T3, Free T4" } },
+              { name: { ro: "Pancreas", en: "Pancreas" }, icon: "🟡", markers: ["glucose","hba1c","insulin","homair","lipase","amylase"], tip: { ro: "Glucoza, HbA1c, Insulina", en: "Glucose, HbA1c, Insulin" } },
+              { name: { ro: "Prostata", en: "Prostate" }, icon: "🔵", markers: ["psa"], tip: { ro: "PSA", en: "PSA" } },
+              { name: { ro: "Sange", en: "Blood" }, icon: "🩸", markers: ["wbc","rbc","hgb","hct","plt"], tip: { ro: "WBC, RBC, Hemoglobina", en: "WBC, RBC, Hemoglobin" } },
+              { name: { ro: "Hormoni", en: "Hormones" }, icon: "⚡", markers: ["testTotal","testFree","cortisol","igf1","dheas"], tip: { ro: "Testosteron, Cortizol, IGF-1", en: "Testosterone, Cortisol, IGF-1" } },
+              { name: { ro: "Inflamatie", en: "Inflammation" }, icon: "🔥", markers: ["hscrp","homocysteine","fibrinogen","il6","esr"], tip: { ro: "CRP, Homocisteina, IL-6", en: "CRP, Homocysteine, IL-6" } },
+            ].map((organ, idx) => {
+              const markerResults = organ.markers.map(k => { const lv = getLabValue(k); const bm = BIOMARKERS.find(b => b.key === k); return lv && bm ? getZone(bm, lv.v) : null; }).filter(Boolean);
+              const worst = markerResults.includes("critical") ? "critical" : markerResults.includes("warning") ? "warning" : markerResults.length > 0 ? "optimal" : null;
+              const c = worst ? zoneColor[worst] : "#334155";
+              return (
+                <div key={idx} style={{ background: `${c}08`, borderRadius: 10, padding: 12, border: `1px solid ${c}22`, textAlign: "center" }}>
+                  <div style={{ fontSize: 28, marginBottom: 4 }}>{organ.icon}</div>
+                  <div style={{ color: c, fontSize: 13, fontWeight: 600 }}>{organ.name[lang]}</div>
+                  <div style={{ color: "#475569", fontSize: 9, marginTop: 2 }}>{organ.tip[lang]}</div>
+                  {worst && <span style={{ background: `${c}22`, color: c, padding: "1px 6px", borderRadius: 4, fontSize: 8, fontWeight: 700, marginTop: 4, display: "inline-block" }}>{worst === "optimal" ? "OK" : worst === "warning" ? "!" : "!!!"}</span>}
+                  {!worst && <span style={{ color: "#334155", fontSize: 9, display: "block", marginTop: 4 }}>{lang === "ro" ? "Nu sunt date" : "No data"}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Supplement Interactions */}
+        <div style={{ ...sty.card, border: "1px solid rgba(249,115,22,0.15)" }}>
+          <h3 style={{ color: "#fb923c", margin: "0 0 12px", fontSize: 14 }}>⚠️ {lang === "ro" ? "Interactiuni Suplimente & Medicamente" : "Supplement & Drug Interactions"} ({INTERACTIONS.length})</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {INTERACTIONS.map((ix, i) => (
+              <div key={i} style={{ background: ix.severity === "danger" ? "rgba(239,68,68,0.06)" : ix.severity === "warning" ? "rgba(234,179,8,0.06)" : "rgba(59,130,246,0.06)", borderRadius: 8, padding: 10, borderLeft: `3px solid ${ix.severity === "danger" ? "#ef4444" : ix.severity === "warning" ? "#eab308" : "#3b82f6"}`, display: "grid", gridTemplateColumns: "auto 1fr", gap: 10, alignItems: "center" }}>
+                <span style={{ background: ix.severity === "danger" ? "#ef444422" : ix.severity === "warning" ? "#eab30822" : "#3b82f622", color: ix.severity === "danger" ? "#f87171" : ix.severity === "warning" ? "#fbbf24" : "#60a5fa", padding: "2px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700 }}>{ix.severity === "danger" ? "PERICOL" : ix.severity === "warning" ? "ATENTIE" : "INFO"}</span>
+                <div><span style={{ color: "#e2e8f0", fontSize: 12, fontWeight: 600 }}>{ix.a} + {ix.b}</span><span style={{ color: "#94a3b8", fontSize: 11, marginLeft: 8 }}>{ix.note[lang]}</span></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Research & Yearly Review - AI Shortcuts */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ ...sty.card, border: "1px solid rgba(34,197,94,0.15)" }}>
+            <h3 style={{ color: "#86efac", margin: "0 0 10px", fontSize: 14 }}>📰 {lang === "ro" ? "Cercetare Longevitate" : "Longevity Research"}</h3>
+            <p style={{ color: "#94a3b8", fontSize: 11, margin: "0 0 10px", lineHeight: 1.5 }}>{lang === "ro" ? "AI Coach cauta ultimele studii relevante pentru protocoalele tale." : "AI Coach searches the latest studies relevant to your protocols."}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[
+                { q: lang === "ro" ? "Ultimele studii Rapamicina longevitate 2025-2026" : "Latest Rapamycin longevity studies 2025-2026", l: "Rapamicina" },
+                { q: lang === "ro" ? "Cercetari noi NMN NAD+ anti-aging 2026" : "New NMN NAD+ anti-aging research 2026", l: "NMN/NAD+" },
+                { q: lang === "ro" ? "Studii Metformina TAME trial update 2026" : "Metformin TAME trial update 2026", l: "Metformina" },
+                { q: lang === "ro" ? "Noi protocoale anti-aging David Sinclair Bryan Johnson 2026" : "New anti-aging protocols David Sinclair Bryan Johnson 2026", l: "General" },
+              ].map((r, i) => (
+                <button key={i} onClick={() => { setTab("chat"); setChatInput(r.q); }} style={{ ...sty.btn("#22c55e"), textAlign: "left", fontSize: 11, padding: "6px 10px" }}>{r.l}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ ...sty.card, border: "1px solid rgba(236,72,153,0.15)" }}>
+            <h3 style={{ color: "#f9a8d4", margin: "0 0 10px", fontSize: 14 }}>📈 {lang === "ro" ? "Review Anual" : "Yearly Review"}</h3>
+            <p style={{ color: "#94a3b8", fontSize: 11, margin: "0 0 10px", lineHeight: 1.5 }}>{lang === "ro" ? "Analiza completa a progresului pe un an." : "Complete yearly progress analysis."}</p>
+            <button onClick={() => { setTab("chat"); setChatInput(lang === "ro" ? "Fa-mi un review anual complet. Analizeaza toate datele mele — WHOOP, analize de sange, greutate, compliance la protocoale. Ce am facut bine, ce trebuie imbunatatit, si ce obiective ar trebui sa am pentru urmatorul an." : "Do a complete yearly review. Analyze all my data — WHOOP, blood tests, weight, protocol compliance. What I did well, what needs improvement, and what goals I should set for next year."); }} style={{ ...sty.btnPrimary, width: "100%", background: "linear-gradient(135deg, #ec4899, #be185d)" }}>
+              {lang === "ro" ? "Genereaza Review Anual" : "Generate Yearly Review"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderChat = () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, height: "70vh" }}>
       <div style={{ ...sty.card, background: "linear-gradient(135deg, #0a1628, #0a2818, #0a1628)", border: "1px solid rgba(34,197,94,0.2)", flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1481,7 +1708,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
     </div>
   );
 
-  const CONTENT = { dashboard: renderDashboard, tracker: renderTracker, whoop: renderWhoop, labs: renderLabs, biomarkers: renderBiomarkers, protocols: renderProtocols, supplements: renderSupplements, exercise: renderExercise, nutrition: renderNutrition, sleep: renderSleep, screening: renderScreening, chat: renderChat };
+  const CONTENT = { dashboard: renderDashboard, tracker: renderTracker, whoop: renderWhoop, labs: renderLabs, biomarkers: renderBiomarkers, protocols: renderProtocols, supplements: renderSupplements, exercise: renderExercise, nutrition: renderNutrition, sleep: renderSleep, screening: renderScreening, insights: renderInsights, chat: renderChat };
 
   if (!ready) return <div style={{ minHeight: "100vh", background: "#020617", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#8b5cf6", fontSize: 14 }}>⏳ Loading LONGEVITY OS...</div></div>;
 
@@ -1506,7 +1733,7 @@ Respond in ${lang === "ro" ? "Romanian" : "English"}. Be specific, evidence-base
         </div>
         <div style={{ display: "flex", gap: 1, overflowX: "auto", paddingBottom: 0 }}>
           {Object.entries(t.tabs).map(([id, label]) => {
-            const icons = { dashboard: "◉", tracker: "📊", whoop: "⌚", labs: "🧪", biomarkers: "🧬", protocols: "⚗️", supplements: "💊", exercise: "🏋️", nutrition: "🥗", sleep: "🌙", screening: "🔬", chat: "🤖" };
+            const icons = { dashboard: "◉", tracker: "📊", whoop: "⌚", labs: "🧪", biomarkers: "🧬", protocols: "⚗️", supplements: "💊", exercise: "🏋️", nutrition: "🥗", sleep: "🌙", screening: "🔬", insights: "🧠", chat: "🤖" };
             return (
               <button key={id} onClick={() => setTab(id)} style={{
                 background: tab === id ? "rgba(139,92,246,0.15)" : "transparent",
